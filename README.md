@@ -1,7 +1,5 @@
 # Installation
 
----
-
 ## Requires
 
 - Python >= 3.10
@@ -12,8 +10,6 @@ pip install -r requirements.txt
 ```
 
 # Getting Start
-
----
 
 ## Launch
 
@@ -30,8 +26,6 @@ python pyfactoring
 ```
 
 # Features
-
----
 
 - Анализ исходных текстов программ и получение из них программных идиом
 - Извлечение программных идиом из исходного текста программы и их вывод
