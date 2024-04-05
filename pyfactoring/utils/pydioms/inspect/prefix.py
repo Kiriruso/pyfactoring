@@ -1,14 +1,18 @@
-# todo: добавить __all__
+__all__ = ["make_prefix_trees", "SubtreeVariant", "PrefixTree", "PrefixNode", "PrefixLeaf"]
 
 import ast
 
 from typing import Iterable
 
 from pyfactoring.utils.pydioms.inspect.types import CountingType
-from pyfactoring.utils.pydioms.inspect.inspector import ASTInspector, ASTInspectedNode, ASTInspectedLeaf
+from pyfactoring.utils.pydioms.inspect.inspector import (
+    make_inspected_tree,
+    ASTInspectedNode,
+    ASTInspectedLeaf,
+)
 
 
-def make_prefix_trees(trees: Iterable[ASTInspectedNode | ast.AST]) -> list['PrefixTree']:
+def make_prefix_trees(trees: Iterable[ASTInspectedNode | ast.AST]) -> list["PrefixTree"]:
     prefix_trees = []
     for tree in trees:
         prefix_tree = PrefixTree()
@@ -47,7 +51,9 @@ class PrefixLeaf:
         self.value_to_ids[inspected_leaf.name].add(subtree_id)
         self.id_to_values[subtree_id] = (inspected_leaf.name, inspected_leaf.count_as)
 
-    def variant(self, id_: int | None, name_: str | None) -> tuple[SubtreeVariant | None, set[int], CountingType]:
+    def variant(
+        self, id_: int | None, name_: str | None
+    ) -> tuple[SubtreeVariant | None, set[int], CountingType]:
         if id_ is not None:
             name = self.id_to_values.get(id_)[0]
             ids = self.value_to_ids.get(name)
@@ -83,7 +89,9 @@ class PrefixNode:
         for prefix_node_or_leaf, inspected_node_or_leaf in zip(variant.children, subtree_root.children):
             prefix_node_or_leaf.add_subtree(inspected_node_or_leaf, subtree_id)
 
-    def variant(self, id_: int | None, name_: str | None) -> tuple[SubtreeVariant | None, set[int], CountingType]:
+    def variant(
+        self, id_: int | None, name_: str | None
+    ) -> tuple[SubtreeVariant | None, set[int], CountingType]:
         if id_ is not None:
             variant = self.variant_by_id(id_)
         elif name_ is not None:
@@ -101,7 +109,9 @@ class PrefixNode:
     def variant_by_name(self, name_: str) -> SubtreeVariant | None:
         return self.name_to_variants.get(name_)
 
-    def _returning_variant_insert(self, subtree_root: ASTInspectedNode | ASTInspectedLeaf) -> SubtreeVariant:
+    def _returning_variant_insert(
+        self, subtree_root: ASTInspectedNode | ASTInspectedLeaf
+    ) -> SubtreeVariant:
         variant = SubtreeVariant(subtree_root.ast, subtree_root.count_as)
         self.name_to_variants[subtree_root.name] = variant
         return variant
@@ -126,10 +136,12 @@ class PrefixTree:
             self.add_tree(tree)
 
     def __repr__(self) -> str:
-        return (f"{self.__class__.__name__}("
-                f"operands={self.total_operands}, "
-                f"operators={self.total_operators}"
-                f")")
+        return (
+            f"{self.__class__.__name__}("
+            f"operands={self.total_operands}, "
+            f"operators={self.total_operators}"
+            f")"
+        )
 
     def add_tree(self, root: ASTInspectedNode | ast.AST):
         if isinstance(root, ASTInspectedNode):
@@ -140,8 +152,10 @@ class PrefixTree:
             self.add_ast_obj(root)
             return
 
-        raise TypeError(f"Получен неподдерживаемый объект: {root}. "
-                        f"Ожидаемый тип: ASTInspectedNode | AST.")
+        raise TypeError(
+            f"Получен неподдерживаемый объект: {root}. "
+            f"Ожидаемый тип: ASTInspectedNode | AST."
+        )
 
     def add_inspected_tree(self, root: ASTInspectedNode):
         self.total_operands += root.total_operands
@@ -149,7 +163,7 @@ class PrefixTree:
         self._add_tree(root)
 
     def add_ast_obj(self, root: ast.AST):
-        inspected_tree = ASTInspector.make_inspected_tree(root)
+        inspected_tree = make_inspected_tree(root)
         self.add_inspected_tree(inspected_tree)
 
     def _add_name(self, operand_name: str):
@@ -186,10 +200,7 @@ class PrefixTree:
 
     @classmethod
     def _contains_node(
-            cls,
-            prefix_root: PrefixNode,
-            inspected_node: ASTInspectedNode,
-            rset: set | None
+        cls, prefix_root: PrefixNode, inspected_node: ASTInspectedNode, rset: set | None
     ) -> set:
         if inspected_node.name not in prefix_root.name_to_variants:
             return set()
@@ -207,12 +218,7 @@ class PrefixTree:
         return rset
 
     @classmethod
-    def _contains_leaf(
-            cls,
-            value_to_ids: dict,
-            leaf_name: str,
-            rset: set | None
-    ) -> set:
+    def _contains_leaf(cls, value_to_ids: dict, leaf_name: str, rset: set | None) -> set:
         if leaf_name not in value_to_ids:
             return set()
 
@@ -224,10 +230,10 @@ class PrefixTree:
 
     @classmethod
     def _contains_inspected_tree(
-            cls,
-            prefix_root: PrefixNode | PrefixLeaf,
-            inspected_root: ASTInspectedNode | ASTInspectedLeaf,
-            rset: set | None = None
+        cls,
+        prefix_root: PrefixNode | PrefixLeaf,
+        inspected_root: ASTInspectedNode | ASTInspectedLeaf,
+        rset: set | None = None,
     ) -> set:
         is_prefix_node = isinstance(prefix_root, PrefixNode)
         is_inspected_node = isinstance(inspected_root, ASTInspectedNode)

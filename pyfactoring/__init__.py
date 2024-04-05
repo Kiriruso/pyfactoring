@@ -1,1 +1,2 @@
-from pyfactoring.utils import files, inspect, extracting, pydioms_config
+from pyfactoring.utils import files, inspect, extracting
+from pyfactoring.config import config

@@ -9,11 +9,15 @@ def main():
 
     target = input("Введите абсолютный путь к проекту/файлу[.txt | .py]: ")
 
-    exclude_dirs = input("Введите директории для исключения (через пробел) или skip: ")
-    exclude_dirs = None if exclude_dirs.lower() == 'skip' else exclude_dirs.split()
+    if target.endswith(".py"):
+        exclude_dirs = None
+        exclude_files = None
+    else:
+        exclude_dirs = input("Введите папки для исключения или skip: ")
+        exclude_dirs = None if exclude_dirs.lower() == "skip" else exclude_dirs.split()
 
-    exclude_files = input("Введите файлы для исключения (через пробел) или skip: ")
-    exclude_files = None if exclude_files.lower() == 'skip' else exclude_files.split()
+        exclude_files = input("Введите файлы для исключения или skip: ")
+        exclude_files = None if exclude_files.lower() == "skip" else exclude_files.split()
 
     print()
 
@@ -24,7 +28,7 @@ def main():
     prefix_trees = {filepath: tree for filepath, tree in zip(filepaths, prefix_trees)}
 
     terminal_size = shutil.get_terminal_size()
-    print('=' * terminal_size.columns)
+    print("=" * terminal_size.columns)
 
     for filepath, prefix_tree in prefix_trees.items():
         idioms = extracting.extract_idioms(prefix_tree)
@@ -35,14 +39,13 @@ def main():
         print(f"FILEPATH  |  {filepath}")
 
         for idiom, info in idioms.items():
-            print('=' * terminal_size.columns)
+            print("=" * terminal_size.columns)
             print(f"\n{info.state.idiom}\n")
             for i in info.primary_ids:
                 inspected_tree = prefix_tree.inspected_trees[i]
-                print(f"lineno={inspected_tree.ast.lineno}, end={inspected_tree.ast.end_lineno}")
-                print(f"col_offset={inspected_tree.ast.col_offset}, end={inspected_tree.ast.end_col_offset}")
+                print(f"link: {filepath}:{inspected_tree.ast.lineno}:{inspected_tree.ast.col_offset}")
                 for source in extracting.source_from_inspected_tree(filepath, inspected_tree):
                     print(source)
                 print()
 
-        print('=' * terminal_size.columns)
+        print("=" * terminal_size.columns)

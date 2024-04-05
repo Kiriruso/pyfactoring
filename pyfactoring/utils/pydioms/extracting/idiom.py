@@ -1,13 +1,13 @@
-# todo: добавить __all__
+__all__ = ["extract_idioms", "Idiom", "IdiomInfo", "IdiomState"]
 
 import math
 
-from pyfactoring.utils.pydioms import pydioms_config
+from pyfactoring.config import config
 from pyfactoring.utils.pydioms.inspect.types import CountingType, AST_TOTAL_UNIQUE_OPERATORS
 from pyfactoring.utils.pydioms.inspect.prefix import PrefixTree, PrefixNode, PrefixLeaf, SubtreeVariant
 
-min_idiom_count = pydioms_config.IDIOM_COUNT
-min_idiom_length = pydioms_config.IDIOM_LENGTH
+min_idiom_count = config.get("idiom_count", 5)
+min_idiom_length = config.get("idiom_length", 10)
 
 
 class Idiom:
@@ -20,7 +20,7 @@ class Idiom:
         "information",
         "efficiency",
         "variant",
-        "selected"
+        "selected",
     ]
 
     def __init__(self, ids: set[int] = None, total_trees: int = 0, efficiency: float = None):
@@ -38,13 +38,15 @@ class Idiom:
         self.variant: SubtreeVariant | None = None
 
     def __repr__(self) -> str:
-        return (f"{self.__class__.__name__}("
-                f"length={self.length}, "
-                f"trees={self.total_trees}, "
-                f"information={self.information}, "
-                f"efficiency={self.efficiency}, "
-                f"ids={self.ids}"
-                f")")
+        return (
+            f"{self.__class__.__name__}("
+            f"length={self.length}, "
+            f"trees={self.total_trees}, "
+            f"information={self.information}, "
+            f"efficiency={self.efficiency}, "
+            f"ids={self.ids}"
+            f")"
+        )
 
 
 class IdiomState:
@@ -104,7 +106,9 @@ class IdiomInfo:
         self.primary_ids: set[int] = {id_}
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(state={self.state}, id={self.id}, primaries={self.primary_ids})"
+        return (
+            f"{self.__class__.__name__}(state={self.state}, id={self.id}, primaries={self.primary_ids})"
+        )
 
     @property
     def efficiency(self) -> float:
@@ -123,7 +127,9 @@ def extract_idioms(tree: PrefixTree, *, debug: bool = False) -> dict[frozenset[i
     idioms: dict[frozenset[int], IdiomInfo] = {}
     rejected_idioms: set[frozenset[int]] = set()
     processed_variants: list[bool] = [False] * len(tree.id_to_freq)
-    efficiencies: list[tuple[float | None, frozenset[int]]] = [(None, frozenset())] * len(tree.id_to_freq)
+    efficiencies: list[tuple[float | None, frozenset[int]]] = (
+            [(None, frozenset())] * len(tree.id_to_freq)
+    )
     states: list[IdiomState] = []
 
     ids = {i for i, _ in enumerate(tree.id_to_freq)}
@@ -133,10 +139,7 @@ def extract_idioms(tree: PrefixTree, *, debug: bool = False) -> dict[frozenset[i
         - (tree.total_operators + total_trees + 1) * math.log2(AST_TOTAL_UNIQUE_OPERATORS)
         - (tree.total_operands + total_trees + 1) * math.log2(len(tree.operand_names) + 1)
     )
-    static_state = IdiomState(
-        Idiom(ids, tree.trees_by_ids(ids), efficiency),
-        [tree.root]
-    )
+    static_state = IdiomState(Idiom(ids, tree.trees_by_ids(ids), efficiency), [tree.root])
 
     for variant_id, _ in enumerate(tree.id_to_freq):
         if processed_variants[variant_id]:
@@ -198,35 +201,33 @@ def _information_from_tree(tree: PrefixTree) -> float:
 
 def _efficiency_from_tree(tree: PrefixTree, idiom: Idiom) -> float:
     total_operators = (
-            tree.total_operators
-            - idiom.total_trees * idiom.total_operators
-            + idiom.total_trees
-            + idiom.total_operators
-            + 1
+        tree.total_operators
+        - idiom.total_trees * idiom.total_operators
+        + idiom.total_trees
+        + idiom.total_operators
+        + 1
     )
 
     total_operands = (
-            tree.total_operands
-            - idiom.total_trees * idiom.total_operands
-            + idiom.total_trees
-            + idiom.total_operands
-            + 1
+        tree.total_operands
+        - idiom.total_trees * idiom.total_operands
+        + idiom.total_trees
+        + idiom.total_operands
+        + 1
     )
 
-    return (
-        _information_from_tree(tree) - (
-            total_operators * math.log2(AST_TOTAL_UNIQUE_OPERATORS)
-            + total_operands * math.log2(len(tree.operand_names) + 1)
-        )
+    return _information_from_tree(tree) - (
+        total_operators * math.log2(AST_TOTAL_UNIQUE_OPERATORS)
+        + total_operands * math.log2(len(tree.operand_names) + 1)
     )
 
 
 def _expand_tree(
-        tree: PrefixTree,
-        state: IdiomState,
-        selected_id: int,
-        variant_id: int = None,
-        variant_name: str = None
+    tree: PrefixTree,
+    state: IdiomState,
+    selected_id: int,
+    variant_id: int = None,
+    variant_name: str = None,
 ) -> tuple[Idiom, CountingType]:
     edge: PrefixNode | PrefixLeaf = state.edges[selected_id]
     possible: Idiom = Idiom()
@@ -284,9 +285,7 @@ def _process_state(tree: PrefixTree, state: IdiomState, idiom_id: int) -> Idiom:
 
 
 def _find_unprocessed_state(
-        state: IdiomState,
-        states: list[IdiomState],
-        processed_variants: list[bool]
+    state: IdiomState, states: list[IdiomState], processed_variants: list[bool]
 ) -> tuple[int, IdiomState]:
     while True:
         idiom_id = next(state)
@@ -301,11 +300,11 @@ def _find_unprocessed_state(
 
 
 def _find_idiom_in_tree(
-        tree: PrefixTree,
-        idiom_id: int,
-        state: IdiomState,
-        states: list[IdiomState],
-        processed_variants: list[bool]
+    tree: PrefixTree,
+    idiom_id: int,
+    state: IdiomState,
+    states: list[IdiomState],
+    processed_variants: list[bool],
 ) -> int:
     while True:
         hypothesis = _process_state(tree, state, idiom_id)
@@ -326,12 +325,12 @@ def _find_idiom_in_tree(
 
 
 def _process_idiom(
-        idiom_id: int,
-        idioms: dict[frozenset[int], IdiomInfo],
-        state: IdiomState,
-        states: list[IdiomState],
-        rejected_idioms: set[frozenset[int]],
-        efficiencies: list[tuple[float | None, frozenset[int]]]
+    idiom_id: int,
+    idioms: dict[frozenset[int], IdiomInfo],
+    state: IdiomState,
+    states: list[IdiomState],
+    rejected_idioms: set[frozenset[int]],
+    efficiencies: list[tuple[float | None, frozenset[int]]],
 ):
     global min_idiom_count
 
@@ -359,10 +358,10 @@ def _process_idiom(
 
 
 def _reject(
-        state: IdiomState,
-        states: list[IdiomState],
-        idioms: dict[frozenset[int], IdiomInfo],
-        efficiencies: list[tuple[float | None, frozenset[int]]]
+    state: IdiomState,
+    states: list[IdiomState],
+    idioms: dict[frozenset[int], IdiomInfo],
+    efficiencies: list[tuple[float | None, frozenset[int]]],
 ) -> set[frozenset[int]]:
     rejected: set[frozenset[int]] = set()
     for s in states:
