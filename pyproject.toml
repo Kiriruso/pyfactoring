@@ -1,0 +1,9 @@
+[tool.ruff]
+line-length = 105
+
+[tool.pyfactoring]
+idiom_count = 5
+idiom_length = 10
+# diff
+# color
+# typed

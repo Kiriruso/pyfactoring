@@ -4,5 +4,5 @@ from pyfactoring.utils.pydioms.extracting.idiom import (
 )
 
 from pyfactoring.utils.pydioms.extracting.source import (
-    extract_ast, source_from_inspected_tree, dump_inspected_tree
+    extract_source, extract_ast, source_from_inspected_tree, dump_inspected_tree
 )

@@ -6,7 +6,7 @@ setup(
     python_requires=">=3.10",
     install_requires=["setuptools >= 69.2.0", "wheel >= 0.43.0"],
     extras_require={
-        "dev": ["black >= 23.1.0"],
+        "dev": ["ruff >= 0.3.7"],
     },
     packages=find_packages(),
     author="Kiriruso",

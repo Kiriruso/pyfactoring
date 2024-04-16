@@ -14,10 +14,10 @@ def main():
         exclude_files = None
     else:
         exclude_dirs = input("Введите папки для исключения или skip: ")
-        exclude_dirs = None if exclude_dirs.lower() == "skip" else exclude_dirs.split()
+        exclude_dirs = None if exclude_dirs.lower() in ("skip", "") else exclude_dirs.split()
 
-        exclude_files = input("Введите файлы для исключения или skip: ")
-        exclude_files = None if exclude_files.lower() == "skip" else exclude_files.split()
+        exclude_files = input("Введите файлы для исключения (skip): ")
+        exclude_files = None if exclude_files.lower() in ("skip", "") else exclude_files.split()
 
     print()
 

@@ -6,19 +6,14 @@ from typing import Generator
 from pyfactoring.utils.pydioms.inspect.inspector import ASTInspectedNode, ASTInspectedLeaf
 
 
-def extract_ast(filepath: Path, *, return_source: bool = False) -> ast.Module | tuple[ast.Module, str]:
-    # todo: назначение функции
-    """
-
-    :param filepath:
-    :param return_source:
-    :return:
-    """
-
+def extract_source(filepath: Path) -> str:
     with open(filepath, "r", encoding="utf-8") as f:
         source: str = f.read()
+    return source
 
-    return (ast.parse(source), source) if return_source else ast.parse(source)
+
+def extract_ast(filepath: Path) -> ast.Module:
+    return ast.parse(extract_source(filepath))
 
 
 def dump_inspected_tree(
