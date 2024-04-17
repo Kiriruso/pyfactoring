@@ -2,8 +2,14 @@
 line-length = 105
 
 [tool.pyfactoring]
+color = true
+#diff
+#typed
+
+[tool.pyfactoring.pydioms]
 idiom_count = 5
 idiom_length = 10
-# diff
-# color
-# typed
+
+[tool.pyfactoring.pyclones]
+clone_count = 2
+clone_length = 1

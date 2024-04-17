@@ -6,8 +6,8 @@ from pyfactoring.config import config
 from pyfactoring.utils.pydioms.inspect.types import CountingType, AST_TOTAL_UNIQUE_OPERATORS
 from pyfactoring.utils.pydioms.inspect.prefix import PrefixTree, PrefixNode, PrefixLeaf, SubtreeVariant
 
-min_idiom_count = config.get("idiom_count", 5)
-min_idiom_length = config.get("idiom_length", 10)
+min_idiom_count = config.get("pydioms").get("idiom_count", 5)
+min_idiom_length = config.get("pydioms").get("idiom_length", 10)
 
 
 class Idiom:
