@@ -4,29 +4,33 @@ import pathlib
 
 from pyfactoring import extracting
 
+min_clone_count = 0  # default 1
 
 HANDLE_ASTS = (
     "If",
     "While",
-    # "For",
+    "For",
 )
 
 
 class Scope:
     def __init__(self, outer: "Scope" = None):
-        self.context = {}
+        self.constants = {}
+        self.variables = {}
+
         if outer:
-            self.context = outer.context.copy()
+            self.constants = outer.constants.copy()
+            self.variables = outer.variables.copy()
 
     def var(self, id_: str) -> str:
-        if id_ not in self.context:
-            self.context[id_] = f"__var_{len(self.context)}__"
-        return self.context[id_]
+        if id_ not in self.variables:
+            self.variables[id_] = f"__var_{len(self.variables)}__"
+        return self.variables[id_]
 
     def const(self, value_: str) -> str:
-        if value_ not in self.context:
-            self.context[value_] = f"__const_{len(self.context)}__"
-        return self.context[value_]
+        if value_ not in self.constants:
+            self.constants[value_] = f"__const_{len(self.constants)}__"
+        return self.constants[value_]
 
 
 class ASTTransformer(ast.NodeTransformer):
@@ -36,13 +40,15 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Assign(self, node: ast.Assign) -> ast.AST:
         for target in node.targets:
-            target.id = self.scope.var(target.id)
+            setattr(target, "id", self.scope.var(target.id))
+
         if isinstance(node.value, ast.Name):
             setattr(node.value, "id", self.scope.var(node.value.id))
         elif isinstance(node.value, ast.Constant):
             setattr(node.value, "value", self.scope.const(node.value.value))
-        elif isinstance(node.value, ast.BinOp):
-            node.value = self.visit(node.value)
+        else:
+            setattr(node, "value", self.visit(node.value))
+
         return node
 
     def visit_AugAssign(self, node: ast.AugAssign) -> ast.AST:
@@ -72,11 +78,15 @@ class ASTTransformer(ast.NodeTransformer):
         return self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
+        if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+            setattr(node.func.value, "id", self.scope.var(node.func.value.id))
+
         for i, arg in enumerate(node.args):
             if isinstance(arg, ast.Name):
                 setattr(node.args[i], "id", self.scope.var(node.args[i].id))
             elif isinstance(arg, ast.Constant):
                 setattr(node.args[i], "value", self.scope.const(node.args[i].value))
+
         return self.generic_visit(node)
 
     def visit_Compare(self, node: ast.Compare) -> ast.AST:
@@ -84,6 +94,8 @@ class ASTTransformer(ast.NodeTransformer):
             setattr(node.left, "id", self.scope.var(node.left.id))
         elif isinstance(node.left, ast.Constant):
             setattr(node.left, "value", self.scope.const(node.left.value))
+        else:
+            setattr(node, "left", self.visit(node.left))
 
         # todo: пропустим изменение оператора
 
@@ -95,9 +107,28 @@ class ASTTransformer(ast.NodeTransformer):
             else:
                 node.comparators[i] = self.visit(arg)
 
-        return self.generic_visit(node)
+        return node
 
-    def visit_If(self, node: ast.If) -> ast.AST:
+    def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
+        if isinstance(node.left, ast.Name):
+            setattr(node.left, "id", self.scope.var(node.left.id))
+        elif isinstance(node.left, ast.Constant):
+            setattr(node.left, "value", self.scope.const(node.left.value))
+        else:
+            setattr(node, "left", self.visit(node.left))
+
+        # todo: пропустим изменение оператора
+
+        if isinstance(node.right, ast.Name):
+            setattr(node.right, "id", self.scope.var(node.right.id))
+        elif isinstance(node.right, ast.Constant):
+            setattr(node.right, "value", self.scope.const(node.right.value))
+        else:
+            setattr(node, "right", self.visit(node.right))
+
+        return node
+
+    def _if_or_while_visit(self, node: ast.If | ast.While) -> ast.AST:
         if self.scope is None:
             self.scope = Scope()
         else:
@@ -126,32 +157,32 @@ class ASTTransformer(ast.NodeTransformer):
 
         return node
 
-    def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
-        if isinstance(node.left, ast.Name):
-            node.left.id = self.scope.var(node.left.id)
-        elif isinstance(node.left, ast.Constant):
-            node.left.value = self.scope.const(node.left.value)
-
-        # todo: пропустим изменение оператора
-
-        if isinstance(node.right, ast.Name):
-            node.right.id = self.scope.var(node.right.id)
-        elif isinstance(node.right, ast.Constant):
-            node.right.value = self.scope.const(node.right.value)
-
-        return self.generic_visit(node)
+    def visit_If(self, node: ast.If) -> ast.AST:
+        return self._if_or_while_visit(node)
 
     def visit_While(self, node: ast.While) -> ast.AST:
+        return self._if_or_while_visit(node)
+
+    def visit_For(self, node: ast.For) -> ast.AST:
         if self.scope is None:
             self.scope = Scope()
         else:
             self.scope_stack.append(self.scope)
             self.scope = Scope(self.scope_stack[-1])
 
-        if isinstance(node.test, ast.Name):
-            setattr(node.test, "id", self.scope.var(node.test.id))
+        if isinstance(node.target, ast.Name):
+            setattr(node.target, "id", self.scope.var(node.target.id))
+        elif isinstance(node.target, (ast.Tuple, ast.List, ast.Set)):
+            for elt in node.target.elts:
+                if isinstance(elt, ast.Name):
+                    setattr(elt, "id", self.scope.var(elt.id))
+                elif isinstance(elt, ast.Constant):
+                    setattr(elt, "value", self.scope.const(elt.value))
+
+        if isinstance(node.iter, ast.Name):
+            setattr(node.iter, "id", self.scope.var(node.iter.id))
         else:
-            setattr(node, "test", self.visit(node.test))
+            setattr(node, "iter", self.visit(node.iter))
 
         self.scope_stack.append(self.scope)
 
@@ -202,6 +233,9 @@ if __name__ == "__main__":
                 clones.setdefault(dump, Clone(node))
 
     for dump, info in clones.items():
+        if info.count <= min_clone_count:
+            continue
+
         print(dump)
         print()
         for instance in info.instances:
