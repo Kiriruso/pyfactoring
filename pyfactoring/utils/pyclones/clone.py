@@ -45,6 +45,18 @@ class ASTTransformer(ast.NodeTransformer):
             node.value = self.visit(node.value)
         return node
 
+    def visit_AugAssign(self, node: ast.AugAssign) -> ast.AST:
+        node.target.id = self.scope.var(node.target.id)
+
+        # todo: пропустим изменение оператора
+
+        if isinstance(node.value, ast.Name):
+            setattr(node.value, "id", self.scope.var(node.value.id))
+        elif isinstance(node.value, ast.Constant):
+            setattr(node.value, "value", self.scope.const(node.value.value))
+
+        return node
+
     def visit_Expr(self, node: ast.Expr) -> ast.AST:
         if isinstance(node.value, ast.Name):
             setattr(node.value, "id", self.scope.var(node.value.id))
@@ -73,7 +85,7 @@ class ASTTransformer(ast.NodeTransformer):
         elif isinstance(node.left, ast.Constant):
             setattr(node.left, "value", self.scope.const(node.left.value))
 
-        # Изменение оператора рассматривать не будем
+        # todo: пропустим изменение оператора
 
         for i, arg in enumerate(node.comparators):
             if isinstance(arg, ast.Name):
@@ -120,7 +132,7 @@ class ASTTransformer(ast.NodeTransformer):
         elif isinstance(node.left, ast.Constant):
             node.left.value = self.scope.const(node.left.value)
 
-        # пропустим изменение оператора
+        # todo: пропустим изменение оператора
 
         if isinstance(node.right, ast.Name):
             node.right.id = self.scope.var(node.right.id)
