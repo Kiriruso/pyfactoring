@@ -1,7 +1,7 @@
-import sys
 import shutil
+import sys
 
-from pyfactoring import files, inspect, extracting
+from pyfactoring import extracting, files, inspect
 
 
 def main():

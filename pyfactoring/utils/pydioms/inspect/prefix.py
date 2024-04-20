@@ -1,15 +1,14 @@
 __all__ = ["make_prefix_trees", "SubtreeVariant", "PrefixTree", "PrefixNode", "PrefixLeaf"]
 
 import ast
-
 from typing import Iterable
 
-from pyfactoring.utils.pydioms.inspect.types import CountingType
 from pyfactoring.utils.pydioms.inspect.inspector import (
-    make_inspected_tree,
-    ASTInspectedNode,
     ASTInspectedLeaf,
+    ASTInspectedNode,
+    make_inspected_tree,
 )
+from pyfactoring.utils.pydioms.inspect.types import CountingType
 
 
 def make_prefix_trees(trees: Iterable[ASTInspectedNode | ast.AST]) -> list["PrefixTree"]:

@@ -1,7 +1,7 @@
 import ast
 
-from enum import IntEnum
 from dataclasses import dataclass
+from enum import IntEnum
 
 
 class CountingType(IntEnum):
@@ -69,7 +69,11 @@ AST_NODES_INFO = {
         ("name", "args", "body", "decorator_list", "returns"),
         CountingType.OPERATOR
     ),
-    "ClassDef": ASTNodeInfo("ClassDef", ("name", "bases", "keywords", "body", "decorator_list"), CountingType.OPERATOR),
+    "ClassDef": ASTNodeInfo(
+        "ClassDef",
+        ("name", "bases", "keywords", "body", "decorator_list"),
+        CountingType.OPERATOR
+    ),
     "Return": ASTNodeInfo("Return", ("value",), CountingType.OPERATOR),
     "Delete": ASTNodeInfo("Delete", ("targets",), CountingType.OPERATOR),
     "Assign": ASTNodeInfo("Assign", ("targets", "value"), CountingType.OPERATOR),
@@ -101,8 +105,16 @@ AST_NODES_INFO = {
     "Await": ASTNodeInfo("Await", ("value",), CountingType.OPERATOR),
     "Yield": ASTNodeInfo("Yield", ("value",), CountingType.OPERATOR),
     "YieldFrom": ASTNodeInfo("YieldFrom", ("value",), CountingType.OPERATOR),
-    "Call": ASTNodeInfo("Call", ("func", "args", "keywords", "starargs", "kwargs"), CountingType.OPERATOR),
-    "FormattedValue": ASTNodeInfo("FormattedValue", ("value", "conversion", "format_spec"), CountingType.OPERATOR),
+    "Call": ASTNodeInfo(
+        "Call",
+        ("func", "args", "keywords", "starargs", "kwargs"),
+        CountingType.OPERATOR
+    ),
+    "FormattedValue": ASTNodeInfo(
+        "FormattedValue",
+        ("value", "conversion", "format_spec"),
+        CountingType.OPERATOR
+    ),
     "Attribute": ASTNodeInfo("Attribute", ("value", "attr"), CountingType.OPERATOR),
     "Subscript": ASTNodeInfo("Subscript", ("value", "slice"), CountingType.OPERATOR),
     "Starred": ASTNodeInfo("Starred", ("value",), CountingType.OPERATOR),
@@ -140,7 +152,11 @@ AST_NODES_INFO = {
     "In": ASTNodeInfo("In", (), CountingType.OPERATOR),
     "NotIn": ASTNodeInfo("NotIn", (), CountingType.OPERATOR),
     "comprehension": ASTNodeInfo("comprehension", ("target", "iter", "ifs"), CountingType.OPERATOR),
-    "AsyncComprehension": ASTNodeInfo("AsyncComprehension", ("target", "iter", "ifs"), CountingType.OPERATOR),
+    "AsyncComprehension": ASTNodeInfo(
+        "AsyncComprehension",
+        ("target", "iter", "ifs"),
+        CountingType.OPERATOR
+    ),
     "ExceptHandler": ASTNodeInfo("ExceptHandler", ("type", "name", "body"), CountingType.OPERATOR),
     "alias": ASTNodeInfo("alias", ("name", "asname"), CountingType.OPERATOR),
     "withitem": ASTNodeInfo("withitem", ("context_expr", "optional_vars"), CountingType.OPERATOR),
@@ -195,4 +211,8 @@ AST_SPECIFIC_NODES: frozenset = frozenset(
     )
 )
 
-AST_TOTAL_UNIQUE_OPERATORS = sum(1 for info in AST_NODES_INFO.values() if info.count_as == CountingType.OPERATOR)
+AST_TOTAL_UNIQUE_OPERATORS = sum(
+    1
+    for info in AST_NODES_INFO.values()
+    if info.count_as == CountingType.OPERATOR
+)

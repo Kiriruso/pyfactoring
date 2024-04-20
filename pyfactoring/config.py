@@ -1,3 +1,5 @@
+__all__ = ["config"]
+
 import os
 import tomllib
 

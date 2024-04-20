@@ -3,8 +3,8 @@ __all__ = ["extract_idioms", "Idiom", "IdiomInfo", "IdiomState"]
 import math
 
 from pyfactoring.config import config
-from pyfactoring.utils.pydioms.inspect.types import CountingType, AST_TOTAL_UNIQUE_OPERATORS
-from pyfactoring.utils.pydioms.inspect.prefix import PrefixTree, PrefixNode, PrefixLeaf, SubtreeVariant
+from pyfactoring.utils.pydioms.inspect.prefix import PrefixLeaf, PrefixNode, PrefixTree, SubtreeVariant
+from pyfactoring.utils.pydioms.inspect.types import AST_TOTAL_UNIQUE_OPERATORS, CountingType
 
 min_idiom_count = config.get("pydioms").get("idiom_count", 5)
 min_idiom_length = config.get("pydioms").get("idiom_length", 10)

@@ -1,1 +1,1 @@
-from pyfactoring.utils.pydioms import inspect, extracting
+from pyfactoring.utils.pydioms import extracting, inspect

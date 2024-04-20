@@ -1,5 +1,21 @@
 [tool.ruff]
 line-length = 105
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "I",
+    "E",
+    "W",
+    "N",
+]
+ignore = ["F403"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
 
 [tool.pyfactoring]
 color = true
