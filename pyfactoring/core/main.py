@@ -7,16 +7,16 @@ from pyfactoring import extracting, files, inspect
 def main():
     sys.setrecursionlimit(sys.getrecursionlimit() * 100)
 
-    target = input("Введите абсолютный путь к проекту/файлу[.txt | .py]: ")
+    target = input("Path to dir or file[.txt | .py]: ")
 
     if target.endswith(".py"):
         exclude_dirs = None
         exclude_files = None
     else:
-        exclude_dirs = input("Введите папки для исключения или skip: ")
+        exclude_dirs = input("Exclude dirs or skip: ")
         exclude_dirs = None if exclude_dirs.lower() in ("skip", "") else exclude_dirs.split()
 
-        exclude_files = input("Введите файлы для исключения (skip): ")
+        exclude_files = input("Exclude files or skip: ")
         exclude_files = None if exclude_files.lower() in ("skip", "") else exclude_files.split()
 
     print()

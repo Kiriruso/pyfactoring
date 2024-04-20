@@ -76,7 +76,7 @@ def make_inspected_tree(root) -> ASTInspectedNode | ASTInspectedLeaf:
     ast_info = AST_NODES_INFO.get(ast_name)
 
     if ast_info is None:
-        warnings.warn(f"Синтаксическая конструкция '{ast_name}' не поддерживается.")
+        warnings.warn(f"Syntax is not supported: '{ast_name}'")
         return ASTInspectedNode()
 
     inspected_node = ASTInspectedNode(ast_info.name, ast_info.count_as)
