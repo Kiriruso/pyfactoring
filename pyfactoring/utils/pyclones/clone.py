@@ -6,10 +6,12 @@ from pyfactoring import extracting
 from pyfactoring.config import config
 from pyfactoring.utils.pyclones.templater import Templater
 
-min_clone_count = config.get("pyclones").get("min_count", 1)
-debug_mode = config.get("pyclones").get("debug_mode", None)
+MIN_CLONE_COUNT = config.get("pyclones").get("min_count", 1)
+MIN_CLONE_LENGTH = config.get("pyclones").get("min_length", 5) - 1
+DEBUG_MODE = config.get("pyclones").get("debug_mode", None)
 
 HANDLE_ASTS = (
+    # "Module",
     "If",
     "While",
     "For",
@@ -22,7 +24,6 @@ HANDLE_ASTS = (
     "Try",
     "TryStar",
     "Match",
-    # "Module",
 )
 
 
@@ -40,7 +41,7 @@ def is_handle_node(node: ast.AST) -> bool:
 
 
 if __name__ == "__main__":
-    target = pathlib.Path(r"D:\Projects\Pet\Python\pyfactoring\pyfactoring\utils\pyclones\simple.py")
+    target = pathlib.Path(r"D:\Projects\Pet\Python\pyfactoring\pyfactoring\utils\pyclones\templater.py")
     module, source = extracting.extract_ast(target), extracting.extract_source(target)
 
     templater = Templater()
@@ -48,8 +49,11 @@ if __name__ == "__main__":
     clones: dict[str, Clone] = {}
     for ast_node in ast.walk(module):
         if is_handle_node(ast_node):
-            new_node = copy.deepcopy(ast_node)
-            dump = ast.unparse(templater.visit(new_node))
+            if ast_node.end_lineno - ast_node.lineno < MIN_CLONE_LENGTH:
+                continue
+
+            dump = ast.unparse(templater.visit(copy.deepcopy(ast_node)))
+
             if dump in clones:
                 clones[dump].count += 1
                 clones[dump].instances.append(ast_node)
@@ -57,7 +61,7 @@ if __name__ == "__main__":
                 clones.setdefault(dump, Clone(ast_node))
 
     for dump, info in clones.items():
-        if info.count <= min_clone_count:
+        if info.count <= MIN_CLONE_COUNT:
             continue
 
         print(dump)

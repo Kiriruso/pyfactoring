@@ -1,6 +1,6 @@
 import ast
-import contextlib
 import builtins
+import contextlib
 
 from pyfactoring.utils.pyclones.scope import Scope
 
@@ -42,7 +42,7 @@ class Templater(ast.NodeTransformer):
         return self.generic_visit(node)
 
     def visit_Assign(self, node: ast.Assign) -> ast.AST:
-        node.targets = list(map(self._templatize, node.targets))
+        node.targets = self._templatize(node.targets)
         node.value = self._templatize(node.value)
         return node
 
@@ -55,6 +55,10 @@ class Templater(ast.NodeTransformer):
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.AST:
         node.target = self._templatize(node.target)
         node.value = self._templatize(node.value)
+        return node
+
+    def visit_Delete(self, node: ast.Delete) -> ast.AST:
+        node.targets = self._templatize(node.targets)
         return node
 
     def visit_Attribute(self, node: ast.Attribute) -> ast.AST:
@@ -126,7 +130,7 @@ class Templater(ast.NodeTransformer):
     def visit_Compare(self, node: ast.Compare) -> ast.AST:
         node.left = self._templatize(node.left)
         # todo: пропустим изменение оператора
-        node.comparators = list(map(self._templatize, node.comparators))
+        node.comparators = self._templatize(node.comparators)
         return node
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> ast.AST:
@@ -138,6 +142,11 @@ class Templater(ast.NodeTransformer):
         node.left = self._templatize(node.left)
         # todo: пропустим изменение оператора
         node.right = self._templatize(node.right)
+        return node
+
+    def visit_BoolOp(self, node: ast.BoolOp) -> ast.AST:
+        node.values = self._templatize(node.values)
+        # todo: пропустим изменение оператора
         return node
 
     def visit_Module(self, node: ast.Module) -> ast.AST:
@@ -193,6 +202,22 @@ class Templater(ast.NodeTransformer):
         with self.scope():
             node.args = self.visit(node.args)
             node.body = self.visit(node.body)
+        return node
+
+    def visit_arguments(self, node: ast.arguments) -> ast.AST:
+        node.posonlyargs = self._templatize(node.posonlyargs)
+        node.args = self._templatize(node.args)
+
+        if node.vararg:
+            node.vararg = self._templatize(node.vararg)
+
+        node.kwonlyargs = self._templatize(node.kwonlyargs)
+        node.kw_defaults = self._templatize(node.kw_defaults)
+
+        if node.kwarg:
+            node.kwarg = self._templatize(node.kwarg)
+
+        node.defaults = self._templatize(node.defaults)
         return node
 
     def visit_Try(self, node: ast.Try) -> ast.AST:
@@ -279,21 +304,17 @@ class Templater(ast.NodeTransformer):
         node.patterns = self._templatize(node.patterns)
         return node
 
-    def visit_arguments(self, node: ast.arguments) -> ast.AST:
-        node.posonlyargs = self._templatize(node.posonlyargs)
-        node.args = self._templatize(node.args)
-
-        if node.vararg:
-            node.vararg = self._templatize(node.vararg)
-
-        node.kwonlyargs = self._templatize(node.kwonlyargs)
-        node.kw_defaults = self._templatize(node.kw_defaults)
-
-        if node.kwarg:
-            node.kwarg = self._templatize(node.kwarg)
-
-        node.defaults = self._templatize(node.defaults)
+    def visit_JoinedStr(self, node: ast.JoinedStr) -> ast.AST:
+        for value in node.values:
+            if isinstance(value, ast.FormattedValue):
+                value = self._templatize(value)
         return node
+
+    def visit_FormattedValue(self, node: ast.FormattedValue) -> ast.AST:
+        node.value = self._templatize(node.value)
+        return node
+
+    # todo: добавить comprehension
 
     def visit_collection(
             self, body: list[ast.stmt | ast.expr | ast.keyword]
@@ -304,6 +325,8 @@ class Templater(ast.NodeTransformer):
         match type(node):
             case ast.Name:
                 node.id = self._scope.scoped_variable(node.id)
+            case ast.Starred:
+                node.value.id = self._scope.scoped_variable(node.value.id)
             case ast.arg:
                 node.arg = self._scope.scoped_variable(node.arg)
             case ast.Constant:
