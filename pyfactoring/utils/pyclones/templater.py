@@ -69,8 +69,8 @@ class Templater(ast.NodeTransformer):
         if isinstance(node.slice, (ast.Name, ast.Constant)):
             node.slice = self._templatize(node.slice)
         elif isinstance(node.slice, ast.Tuple):
-            node.slice.elts = self.visit_collections(node.slice.elts)
-            node.slice.dims = self.visit_collections(node.slice.dims)
+            node.slice.elts = self.visit_collection(node.slice.elts)
+            node.slice.dims = self.visit_collection(node.slice.dims)
         else:
             node.slice = self.visit(node.slice)
 
@@ -89,6 +89,11 @@ class Templater(ast.NodeTransformer):
         return node
 
     def visit_Expr(self, node: ast.Expr) -> ast.AST:
+        node.value = self._templatize(node.value)
+        return node
+
+    def visit_NamedExpr(self, node: ast.NamedExpr) -> ast.AST:
+        node.target = self._templatize(node.target)
         node.value = self._templatize(node.value)
         return node
 
@@ -113,8 +118,8 @@ class Templater(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
         if isinstance(node.func, ast.Attribute):
             node.func = self.visit(node.func)
-        node.args = self.visit_collections(node.args)
-        node.keywords = self.visit_collections(node.keywords)
+        node.args = self.visit_collection(node.args)
+        node.keywords = self.visit_collection(node.keywords)
         return node
 
     def visit_Compare(self, node: ast.Compare) -> ast.AST:
@@ -136,7 +141,7 @@ class Templater(ast.NodeTransformer):
 
     def visit_Module(self, node: ast.Module) -> ast.AST:
         with self.scope():
-            node.body = self.visit_collections(node.body)
+            node.body = self.visit_collection(node.body)
         return node
 
     def visit_If(self, node: ast.If) -> ast.AST:
@@ -156,9 +161,9 @@ class Templater(ast.NodeTransformer):
 
     def visit_With(self, node: ast.With) -> ast.AST:
         with self.scope():
-            node.items = self.visit_collections(node.items)
+            node.items = self.visit_collection(node.items)
             with self.scope():
-                node.body = self.visit_collections(node.body)
+                node.body = self.visit_collection(node.body)
         return node
 
     def visit_AsyncWith(self, node: ast.AsyncWith) -> ast.AST:
@@ -170,14 +175,14 @@ class Templater(ast.NodeTransformer):
             if isinstance(node.optional_vars, ast.Name):
                 node.optional_vars = self._templatize(node.optional_vars)
             else:
-                node.optional_vars = self.visit_collections(node.optional_vars)
+                node.optional_vars = self.visit_collection(node.optional_vars)
         return node
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
         with self.scope():
             node.args = self.visit(node.args)
             with self.scope():
-                node.body = self.visit_collections(node.body)
+                node.body = self.visit_collection(node.body)
         return node
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AST:
@@ -189,26 +194,53 @@ class Templater(ast.NodeTransformer):
             node.body = self.visit(node.body)
         return node
 
-    # todo: try except
+    def visit_Try(self, node: ast.Try) -> ast.AST:
+        with self.scope():
+            with self.scope():
+                node.body = self.visit_collection(node.body)
+
+            with self.scope():
+                node.handlers = self.visit_collection(node.handlers)
+
+            with self.scope():
+                node.orelse = self.visit_collection(node.orelse)
+
+            with self.scope():
+                node.finalbody = self.visit_collection(node.finalbody)
+
+        # todo: реализовать шаблонизатор Exception'ов
+
+        return node
+
+    def visit_TryStar(self, node: ast.TryStar) -> ast.AST:
+        return self.visit_Try(node)
+
+    def visit_ExceptHandler(self, node: ast.ExceptHandler) -> ast.AST:
+        with self.scope():
+            if node.name:
+                node.name = self._scope.scoped_variable(node.name)  # todo: мб убрать
+            node.body = self.visit_collection(node.body)
+        return node
+
     # todo: match
 
     def visit_arguments(self, node: ast.arguments) -> ast.AST:
-        node.posonlyargs = self.visit_collections(node.posonlyargs)
-        node.args = self.visit_collections(node.args)
+        node.posonlyargs = self.visit_collection(node.posonlyargs)
+        node.args = self.visit_collection(node.args)
 
         if node.vararg:
             node.vararg = self._templatize(node.vararg)
 
-        node.kwonlyargs = self.visit_collections(node.kwonlyargs)
-        node.kw_defaults = self.visit_collections(node.kw_defaults)
+        node.kwonlyargs = self.visit_collection(node.kwonlyargs)
+        node.kw_defaults = self.visit_collection(node.kw_defaults)
 
         if node.kwarg:
             node.kwarg = self._templatize(node.kwarg)
 
-        node.defaults = self.visit_collections(node.defaults)
+        node.defaults = self.visit_collection(node.defaults)
         return node
 
-    def visit_collections(
+    def visit_collection(
             self, body: list[ast.stmt | ast.expr | ast.keyword]
     ) -> list[ast.stmt | ast.expr | ast.keyword]:
         return list(map(self._templatize, body))
@@ -238,13 +270,13 @@ class Templater(ast.NodeTransformer):
 
             with self.scope():
                 if isinstance(node.body, list):
-                    node.body = self.visit_collections(node.body)
+                    node.body = self.visit_collection(node.body)
                 else:
                     node.body = self._templatize(node.body)
 
             with self.scope():
                 if isinstance(node.orelse, list):
-                    node.orelse = self.visit_collections(node.orelse)
+                    node.orelse = self.visit_collection(node.orelse)
                 else:
                     node.orelse = self._templatize(node.orelse)
 

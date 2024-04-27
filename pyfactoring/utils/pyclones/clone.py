@@ -3,9 +3,10 @@ import copy
 import pathlib
 
 from pyfactoring import extracting
+from pyfactoring.config import config
 from pyfactoring.utils.pyclones.templater import Templater
 
-min_clone_count = 0  # default 1
+min_clone_count = config.get("pyclones").get("clone_count", 1)
 
 HANDLE_ASTS = (
     "If",
@@ -17,6 +18,8 @@ HANDLE_ASTS = (
     "FunctionDef",
     "AsyncFunctionDef",
     "Lambda",
+    "Try",
+    "TryStar"
     # "Module",
 )
 
