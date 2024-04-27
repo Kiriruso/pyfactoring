@@ -6,7 +6,8 @@ from pyfactoring import extracting
 from pyfactoring.config import config
 from pyfactoring.utils.pyclones.templater import Templater
 
-min_clone_count = config.get("pyclones").get("clone_count", 1)
+min_clone_count = config.get("pyclones").get("min_count", 1)
+debug_mode = config.get("pyclones").get("debug_mode", None)
 
 HANDLE_ASTS = (
     "If",
@@ -19,7 +20,8 @@ HANDLE_ASTS = (
     "AsyncFunctionDef",
     "Lambda",
     "Try",
-    "TryStar"
+    "TryStar",
+    "Match",
     # "Module",
 )
 

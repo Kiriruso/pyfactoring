@@ -1,6 +1,8 @@
 [tool.ruff]
 line-length = 105
 
+# --- pyfactoring settings --- #
+
 [tool.pyfactoring]
 color = true
 #diff
@@ -11,5 +13,6 @@ idiom_count = 5
 idiom_length = 10
 
 [tool.pyfactoring.pyclones]
-clone_count = 0
-clone_length = 1
+min_count = 0
+min_length = 1
+debug_mode = "tree | code"

@@ -24,6 +24,9 @@ class Scope:
         return self._variables[id_]
 
     def scoped_constant(self, value_) -> str:
+        if value_ == Ellipsis:
+            return Ellipsis
+
         value_ = str(value_)
 
         if value_ in self._constants.values():
