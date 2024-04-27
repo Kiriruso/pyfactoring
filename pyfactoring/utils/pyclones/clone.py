@@ -11,6 +11,12 @@ HANDLE_ASTS = (
     "If",
     "While",
     "For",
+    "AsyncFor",
+    "With",
+    "AsyncWith",
+    "FunctionDef",
+    "AsyncFunctionDef",
+    "Lambda",
     # "Module",
 )
 

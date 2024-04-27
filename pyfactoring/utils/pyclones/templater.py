@@ -92,9 +92,18 @@ class Templater(ast.NodeTransformer):
         node.value = self._templatize(node.value)
         return node
 
+    def visit_Return(self, node: ast.Return) -> ast.AST:
+        if node.value:
+            node.value = self._templatize(node.value)
+        return node
+
     def visit_Yield(self, node: ast.Yield) -> ast.AST:
         if node.value:
             node.value = self._templatize(node.value)
+        return node
+
+    def visit_YieldFrom(self, node: ast.YieldFrom) -> ast.AST:
+        node.value = self._templatize(node.value)
         return node
 
     def visit_keyword(self, node: ast.keyword) -> ast.AST:
@@ -142,33 +151,90 @@ class Templater(ast.NodeTransformer):
     def visit_For(self, node: ast.For) -> ast.AST:
         return self._if_for_while_visit(node)
 
+    def visit_AsyncFor(self, node: ast.AsyncFor) -> ast.AST:
+        return self.visit_For(node)
+
+    def visit_With(self, node: ast.With) -> ast.AST:
+        with self.scope():
+            node.items = self.visit_collections(node.items)
+            with self.scope():
+                node.body = self.visit_collections(node.body)
+        return node
+
+    def visit_AsyncWith(self, node: ast.AsyncWith) -> ast.AST:
+        return self.visit_With(node)
+
+    def visit_withitem(self, node: ast.withitem) -> ast.AST:
+        node.context_expr = self.visit(node.context_expr)
+        if node.optional_vars:
+            if isinstance(node.optional_vars, ast.Name):
+                node.optional_vars = self._templatize(node.optional_vars)
+            else:
+                node.optional_vars = self.visit_collections(node.optional_vars)
+        return node
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+        with self.scope():
+            node.args = self.visit(node.args)
+            with self.scope():
+                node.body = self.visit_collections(node.body)
+        return node
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AST:
+        return self.visit_FunctionDef(node)
+
+    def visit_Lambda(self, node: ast.Lambda) -> ast.AST:
+        with self.scope():
+            node.args = self.visit(node.args)
+            node.body = self.visit(node.body)
+        return node
+
+    # todo: try except
+    # todo: match
+
+    def visit_arguments(self, node: ast.arguments) -> ast.AST:
+        node.posonlyargs = self.visit_collections(node.posonlyargs)
+        node.args = self.visit_collections(node.args)
+
+        if node.vararg:
+            node.vararg = self._templatize(node.vararg)
+
+        node.kwonlyargs = self.visit_collections(node.kwonlyargs)
+        node.kw_defaults = self.visit_collections(node.kw_defaults)
+
+        if node.kwarg:
+            node.kwarg = self._templatize(node.kwarg)
+
+        node.defaults = self.visit_collections(node.defaults)
+        return node
+
     def visit_collections(
             self, body: list[ast.stmt | ast.expr | ast.keyword]
     ) -> list[ast.stmt | ast.expr | ast.keyword]:
         return list(map(self._templatize, body))
 
     def _templatize(self, node):
-        if isinstance(node, ast.Name):
-            node.id = self._scope.scoped_variable(node.id)
-            return node
-
-        if isinstance(node, ast.Constant):
-            node.value = self._scope.scoped_constant(node.value)
-            return node
-
-        if isinstance(node, ast.Tuple | ast.List | ast.Set):
-            node.elts = list(map(self._templatize, node.elts))
-            return node
-
-        return self.visit(node)
+        match type(node):
+            case ast.Name:
+                node.id = self._scope.scoped_variable(node.id)
+            case ast.arg:
+                node.arg = self._scope.scoped_variable(node.arg)
+            case ast.Constant:
+                node.value = self._scope.scoped_constant(node.value)
+            case ast.Tuple | ast.List | ast.Set:
+                node.elts = list(map(self._templatize, node.elts))
+            case _:
+                return self.visit(node)
+        return node
 
     def _if_for_while_visit(self, node: ast.If | ast.IfExp | ast.While | ast.For) -> ast.AST:
         with self.scope():
-            if isinstance(node, ast.For):
-                node.target = self._templatize(node.target)
-                node.iter = self._templatize(node.iter)
-            else:
-                node.test = self._templatize(node.test)
+            match type(node):
+                case ast.For | ast.AsyncFor:
+                    node.target = self._templatize(node.target)
+                    node.iter = self._templatize(node.iter)
+                case ast.If, ast.IfExp, ast.While:
+                    node.test = self._templatize(node.test)
 
             with self.scope():
                 if isinstance(node.body, list):
