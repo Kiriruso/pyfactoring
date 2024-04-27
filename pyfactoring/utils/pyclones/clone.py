@@ -11,7 +11,7 @@ HANDLE_ASTS = (
     "If",
     "While",
     "For",
-    "Module",
+    # "Module",
 )
 
 

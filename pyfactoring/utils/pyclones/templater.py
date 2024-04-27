@@ -5,11 +5,11 @@ from pyfactoring.utils.pyclones.scope import Scope
 
 
 class Templater(ast.NodeTransformer):
+    __slots__ = ["_scope", "_scope_stack"]
+
     def __init__(self):
         self._scope: Scope | None = None
         self._scope_stack: list[Scope] = []
-        self._constants: dict[str, str] = {}
-        self._modules: set[str] = set()
 
     @contextlib.contextmanager
     def scope(self):
@@ -28,16 +28,16 @@ class Templater(ast.NodeTransformer):
 
     def visit_alias(self, node: ast.alias) -> ast.AST:
         if node.asname:
-            self._modules.add(node.asname)
+            self._scope.add_import(node.asname)
         else:
-            self._modules.add(node.name)
+            self._scope.add_import(node.name)
         return node
 
     def visit_Import(self, node: ast.Import) -> ast.AST:
         return self.generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> ast.AST:
-        self._modules.add(node.module)
+        self._scope.add_import(node.module)
         return self.generic_visit(node)
 
     def visit_Assign(self, node: ast.Assign) -> ast.AST:
@@ -147,27 +147,13 @@ class Templater(ast.NodeTransformer):
     ) -> list[ast.stmt | ast.expr | ast.keyword]:
         return list(map(self._templatize, body))
 
-    def _templatize_name(self, node: ast.Name):
-        if node.id not in self._modules:
-            node.id = self._scope.var(node.id)
-
-    def _templatize_const(self, node: ast.Constant):
-        if node.value in self._constants.values():
-            return
-
-        if node.value not in self._constants.keys():
-            constant_id = len(self._constants)
-            self._constants[node.value] = f"__const_{constant_id}__"
-
-        node.value = self._constants[node.value]
-
     def _templatize(self, node):
         if isinstance(node, ast.Name):
-            self._templatize_name(node)
+            node.id = self._scope.scoped_variable(node.id)
             return node
 
         if isinstance(node, ast.Constant):
-            self._templatize_const(node)
+            node.value = self._scope.scoped_constant(node.value)
             return node
 
         if isinstance(node, ast.Tuple | ast.List | ast.Set):
