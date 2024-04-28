@@ -3,12 +3,12 @@ import copy
 import pathlib
 
 from pyfactoring import extracting
-from pyfactoring.config import config
+from pyfactoring.config import pyclones_settings
 from pyfactoring.utils.pyclones.templater import Templater
 
-MIN_CLONE_COUNT = config.get("pyclones").get("min_count", 1)
-MIN_CLONE_LENGTH = config.get("pyclones").get("min_length", 5) - 1
-DEBUG_MODE = config.get("pyclones").get("debug_mode", None)
+MIN_CLONE_COUNT = pyclones_settings.count
+MIN_CLONE_LENGTH = pyclones_settings.length
+DEBUG_MODE = pyclones_settings.debug_mode
 
 HANDLE_ASTS = (
     # "Module",
@@ -41,7 +41,7 @@ def is_handle_node(node: ast.AST) -> bool:
 
 
 if __name__ == "__main__":
-    target = pathlib.Path(r"D:\Projects\Pet\Python\pyfactoring\pyfactoring\utils\pyclones\templater.py")
+    target = pathlib.Path(r"D:\Projects\Pet\Python\pyfactoring\pyfactoring\utils\pyclones\test\simple.py")
     module, source = extracting.extract_ast(target), extracting.extract_source(target)
 
     templater = Templater()

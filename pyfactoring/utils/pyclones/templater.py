@@ -6,19 +6,23 @@ from pyfactoring.utils.pyclones.scope import Scope
 
 
 class Templater(ast.NodeTransformer):
-    __slots__ = ["_scope", "_scope_stack"]
+    __slots__ = ["_scope", "_scope_stack", "_local"]
 
     def __init__(self):
         self._scope: Scope | None = None
         self._scope_stack: list[Scope] = []
+        self._local: bool = False
 
     @contextlib.contextmanager
-    def scope(self):
+    def scope(self, *, local: bool = False):
+        self._local = local
+
         if self._scope is not None:
             self._scope_stack.append(self._scope)
             self._scope = Scope(self._scope)
         else:
             self._scope = Scope()
+
         try:
             yield
         finally:
@@ -26,6 +30,8 @@ class Templater(ast.NodeTransformer):
                 self._scope = self._scope_stack.pop()
             else:
                 self._scope = None
+
+            self._local = False
 
     def visit_alias(self, node: ast.alias) -> ast.AST:
         if node.asname:
@@ -107,6 +113,19 @@ class Templater(ast.NodeTransformer):
             node.value = self._templatize(node.value)
         return node
 
+    def visit_Raise(self, node: ast.Raise) -> ast.AST:
+        if node.exc:
+            node.exc = self._templatize(node.exc)
+        if node.cause:
+            node.cause = self._templatize(node.cause)
+        return node
+
+    def visit_Assert(self, node: ast.Assert) -> ast.AST:
+        node.test = self._templatize(node.test)
+        if node.msg:
+            node.msg = self._templatize(node.msg)
+        return node
+
     def visit_Yield(self, node: ast.Yield) -> ast.AST:
         if node.value:
             node.value = self._templatize(node.value)
@@ -114,6 +133,18 @@ class Templater(ast.NodeTransformer):
 
     def visit_YieldFrom(self, node: ast.YieldFrom) -> ast.AST:
         node.value = self._templatize(node.value)
+        return node
+
+    def visit_Await(self, node: ast.Await) -> ast.AST:
+        node.value = self._templatize(node.value)
+        return node
+
+    def visit_Global(self, node: ast.Global) -> ast.AST:
+        node.names = self._templatize(node.names)
+        return node
+
+    def visit_Nonlocal(self, node: ast.Nonlocal) -> ast.AST:
+        node.names = self._templatize(node.names)
         return node
 
     def visit_keyword(self, node: ast.keyword) -> ast.AST:
@@ -244,7 +275,7 @@ class Templater(ast.NodeTransformer):
     def visit_ExceptHandler(self, node: ast.ExceptHandler) -> ast.AST:
         with self.scope():
             if node.name:
-                node.name = self._scope.scoped_variable(node.name)  # todo: мб убрать
+                node.name = self._scope.variable(node.name)  # todo: мб убрать
             node.body = self._templatize(node.body)
         return node
 
@@ -270,11 +301,11 @@ class Templater(ast.NodeTransformer):
         return node
 
     def visit_MatchSingleton(self, node: ast.MatchSingleton) -> ast.AST:
-        node.value = self._scope.scoped_constant(node.value)
+        node.value = self._scope.const(node.value)
         return node
 
     def visit_MatchStar(self, node: ast.MatchStar) -> ast.AST:
-        node.name = self._scope.scoped_variable(node.name)
+        node.name = self._scope.variable(node.name)
         return node
 
     def visit_MatchSequence(self, node: ast.MatchSequence) -> ast.AST:
@@ -285,7 +316,7 @@ class Templater(ast.NodeTransformer):
         node.keys = self._templatize(node.keys)
         node.patterns = self._templatize(node.patterns)
         if node.rest:
-            node.rest = self._scope.scoped_variable(node.rest)
+            node.rest = self._scope.variable(node.rest)
         return node
 
     def visit_MatchClass(self, node: ast.MatchClass) -> ast.AST:
@@ -295,7 +326,7 @@ class Templater(ast.NodeTransformer):
 
     def visit_MatchAs(self, node: ast.MatchAs) -> ast.AST:
         if node.name:
-            node.name = self._scope.scoped_variable(node.name)
+            node.name = self._scope.variable(node.name)
         if node.pattern:
             node.pattern = self._templatize(node.pattern)
         return node
@@ -314,23 +345,55 @@ class Templater(ast.NodeTransformer):
         node.value = self._templatize(node.value)
         return node
 
-    # todo: добавить comprehension
+    def visit_GeneratorExp(self, node: ast.GeneratorExp) -> ast.AST:
+        with self.scope(local=True):
+            node.generators = self._templatize(node.generators)
+            node.elt = self._templatize(node.elt)
+        return node
+
+    def visit_ListComp(self, node: ast.ListComp) -> ast.AST:
+        return self.visit_GeneratorExp(node)
+
+    def visit_SetComp(self, node: ast.SetComp) -> ast.AST:
+        return self.visit_GeneratorExp(node)
+
+    def visit_DictComp(self, node: ast.DictComp) -> ast.AST:
+        with self.scope(local=True):
+            node.generators = self._templatize(node.generators)
+            node.key = self._templatize(node.key)
+            node.value = self._templatize(node.value)
+        return node
+
+    def visit_comprehension(self, node: ast.comprehension) -> ast.AST:
+        node.target = self._templatize(node.target)
+
+        local_state = self._local
+        self._local = isinstance(node.iter, ast.Name) and node.iter.id not in self._scope.variables
+        node.iter = self._templatize(node.iter)
+
+        self._local = local_state
+        node.ifs = self._templatize(node.ifs)
+
+        return node
 
     def visit_collection(
             self, body: list[ast.stmt | ast.expr | ast.keyword]
     ) -> list[ast.stmt | ast.expr | ast.keyword]:
         return list(map(self._templatize, body))
 
-    def _templatize(self, node):
+    def _templatize(self, node: ast.AST):
         match type(node):
             case ast.Name:
-                node.id = self._scope.scoped_variable(node.id)
+                if self._local:
+                    node.id = self._scope.local(node.id)
+                else:
+                    node.id = self._scope.variable(node.id)
             case ast.Starred:
-                node.value.id = self._scope.scoped_variable(node.value.id)
+                node.value.id = self._scope.variable(node.value.id)
             case ast.arg:
-                node.arg = self._scope.scoped_variable(node.arg)
+                node.arg = self._scope.variable(node.arg)
             case ast.Constant:
-                node.value = self._scope.scoped_constant(node.value)
+                node.value = self._scope.const(node.value)
             case ast.Tuple | ast.List | ast.Set:
                 node.elts = self.visit_collection(node.elts)
             case ast.Dict:
