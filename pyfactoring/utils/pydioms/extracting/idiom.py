@@ -2,12 +2,12 @@ __all__ = ["extract_idioms", "Idiom", "IdiomInfo", "IdiomState"]
 
 import math
 
-from pyfactoring.config import config
+from pyfactoring.config import pydioms_settings
 from pyfactoring.utils.pydioms.inspect.prefix import PrefixLeaf, PrefixNode, PrefixTree, SubtreeVariant
 from pyfactoring.utils.pydioms.inspect.types import AST_TOTAL_UNIQUE_OPERATORS, CountingType
 
-min_idiom_count = config.get("pydioms").get("idiom_count", 5)
-min_idiom_length = config.get("pydioms").get("idiom_length", 10)
+MIN_IDIOM_COUNT = pydioms_settings.count
+MIN_IDIOM_LENGTH = pydioms_settings.length
 
 
 class Idiom:
@@ -116,13 +116,13 @@ class IdiomInfo:
 
 
 def extract_idioms(tree: PrefixTree, *, debug: bool = False) -> dict[frozenset[int], IdiomInfo]:
-    global min_idiom_count
-    global min_idiom_length
+    global MIN_IDIOM_COUNT
+    global MIN_IDIOM_LENGTH
 
     if not tree.id_to_freq:
         return {}
 
-    min_idiom_count = math.log2(sum(freq for i, freq in tree.id_to_freq.items()))
+    MIN_IDIOM_COUNT = math.log2(sum(freq for i, freq in tree.id_to_freq.items()))
 
     idioms: dict[frozenset[int], IdiomInfo] = {}
     rejected_idioms: set[frozenset[int]] = set()
@@ -159,7 +159,7 @@ def extract_idioms(tree: PrefixTree, *, debug: bool = False) -> dict[frozenset[i
             processed_variants[idiom_id] = True
             state = max(states, key=lambda st: st.efficiency)
 
-            if not (state.idiom_length < min_idiom_length or state.efficiency < 0):
+            if not (state.idiom_length < MIN_IDIOM_LENGTH or state.efficiency < 0):
                 _process_idiom(idiom_id, idioms, state, states, rejected_idioms, efficiencies)
 
     filtered_idioms: dict[frozenset[int], IdiomInfo] = {}
@@ -250,7 +250,7 @@ def _expand_tree(
 
 
 def _process_state(tree: PrefixTree, state: IdiomState, idiom_id: int) -> Idiom:
-    global min_idiom_count
+    global MIN_IDIOM_COUNT
 
     selected = Idiom()
     selected_no_len = Idiom()
@@ -258,7 +258,7 @@ def _process_state(tree: PrefixTree, state: IdiomState, idiom_id: int) -> Idiom:
     for i, _ in enumerate(state.edges):
         possible, count_as = _expand_tree(tree, state, i, idiom_id)
 
-        if possible.total_trees < min_idiom_count or possible.total_trees == 1:
+        if possible.total_trees < MIN_IDIOM_COUNT or possible.total_trees == 1:
             continue
 
         if possible.total_trees == state.total_trees:
@@ -332,7 +332,7 @@ def _process_idiom(
     rejected_idioms: set[frozenset[int]],
     efficiencies: list[tuple[float | None, frozenset[int]]],
 ):
-    global min_idiom_count
+    global MIN_IDIOM_COUNT
 
     idiom_state = frozenset(state.ids)
 
@@ -344,7 +344,7 @@ def _process_idiom(
         rejected_idioms.update(_reject(state, states, idioms, efficiencies))
         return
 
-    if state.total_trees < min_idiom_count:
+    if state.total_trees < MIN_IDIOM_COUNT:
         rejected_idioms.update(_reject(state, states, idioms, efficiencies))
         return
 

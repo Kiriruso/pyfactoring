@@ -4,9 +4,17 @@ setup(
     name="pyfactoring",
     version="0.0.2",
     python_requires=">=3.10",
-    install_requires=["setuptools >= 69.2.0", "wheel >= 0.43.0"],
+    install_requires=[
+        "setuptools >= 69.2.0",
+        "wheel >= 0.43.0",
+        "colorama >= 0.4.6",
+        "pydantic_settings >= 2.2.1",
+    ],
     extras_require={
-        "dev": ["ruff >= 0.3.7"],
+        "dev": [
+            "ruff >= 0.4.2",
+            "pytest >= 8.2.0",
+        ],
     },
     packages=find_packages(),
     author="Kiriruso",
