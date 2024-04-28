@@ -68,10 +68,7 @@ class Templater(ast.NodeTransformer):
         return node
 
     def visit_Attribute(self, node: ast.Attribute) -> ast.AST:
-        if isinstance(node.value, (ast.Name, ast.Constant)):
-            node.value = self._templatize(node.value)
-        else:
-            node.value = self.visit(node.value)
+        node.value = self._templatize(node.value)
         return node
 
     def visit_Subscript(self, node: ast.Subscript) -> ast.AST:
@@ -213,10 +210,7 @@ class Templater(ast.NodeTransformer):
     def visit_withitem(self, node: ast.withitem) -> ast.AST:
         node.context_expr = self.visit(node.context_expr)
         if node.optional_vars:
-            if isinstance(node.optional_vars, ast.Name):
-                node.optional_vars = self._templatize(node.optional_vars)
-            else:
-                node.optional_vars = self._templatize(node.optional_vars)
+            node.optional_vars = self._templatize(node.optional_vars)
         return node
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:

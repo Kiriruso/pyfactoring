@@ -1,6 +1,8 @@
 class Scope:
     __slots__ = ["_variables", "_constants", "_imports", "_locals"]
 
+    COMMON_KEYWORDS = ("self", "cls")
+
     def __init__(self, outer: "Scope" = None):
         self._variables: dict[str, str] = {}
         self._constants: dict[str, str] = {}
@@ -32,7 +34,7 @@ class Scope:
         self._imports.add(import_name)
 
     def variable(self, id_: str) -> str:
-        if id_ in self._imports or id_ in self._variables.values():
+        if id_ in self.COMMON_KEYWORDS or id_ in self._imports or id_ in self._variables.values():
             return id_
 
         if id_ not in self._variables:
@@ -55,7 +57,7 @@ class Scope:
         return self._constants[value_]
 
     def local(self, name_: str) -> str:
-        if name_ in self._imports:
+        if name_ in self.COMMON_KEYWORDS or name_ in self._imports:
             return name_
 
         if name_ not in self._locals:
