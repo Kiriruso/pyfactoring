@@ -20,14 +20,14 @@ indent-style = "space"
 
 [tool.pyfactoring]
 color = true
-#diff
-#typed
+diff = true
+typed = false
 
 [tool.pyfactoring.pydioms]
-idiom_count = 5
-idiom_length = 10
+count = 5
+length = 10
 
 [tool.pyfactoring.pyclones]
-min_count = 0
-min_length = 0
-# debug_mode = "tree | code"
+count = 0
+length = 1
+debug_mode = "tree"
