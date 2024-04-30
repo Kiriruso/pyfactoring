@@ -1,6 +1,3 @@
 **/__pycache__/
 venv/
 .venv/
-
-pyfactoring/utils/pyclones/test
-pyfactoring/utils/pyclones/simple.py

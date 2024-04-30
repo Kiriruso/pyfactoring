@@ -16,7 +16,6 @@ ignore = ["F403"]
 quote-style = "double"
 indent-style = "space"
 
-# --- pyfactoring settings --- #
 
 [tool.pyfactoring]
 color = true
@@ -30,4 +29,4 @@ length = 10
 [tool.pyfactoring.pyclones]
 count = 0
 length = 1
-debug_mode = "tree"
+debug_mode = "code"

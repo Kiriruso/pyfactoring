@@ -11,7 +11,6 @@ MIN_CLONE_LENGTH = pyclones_settings.length
 DEBUG_MODE = pyclones_settings.debug_mode
 
 HANDLE_ASTS = (
-    # "Module",
     "If",
     "While",
     "For",
@@ -20,7 +19,6 @@ HANDLE_ASTS = (
     "AsyncWith",
     "FunctionDef",
     "AsyncFunctionDef",
-    "Lambda",
     "Try",
     "TryStar",
     "Match",
@@ -41,11 +39,19 @@ def is_handle_node(node: ast.AST) -> bool:
 
 
 if __name__ == "__main__":
-    target = pathlib.Path(r"D:\Projects\Pet\Python\pyfactoring\pyfactoring\utils\pyclones\test\simple.py")
-    module, source = extracting.extract_ast(target), extracting.extract_source(target)
-
+    target = pathlib.Path(__file__).parents[3] / "test" / "common" / "simple.py"
+    module = extracting.extract_ast(target)
     templater = Templater()
 
+    # поиск импортов
+    imports: list[str] = []
+    for ast_node in ast.walk(module):
+        if isinstance(ast_node, ast.alias):
+            imports.append(ast_node.asname if ast_node.asname else ast_node.name)
+
+    templater.add_imports(imports)
+
+    # поиск клонов
     clones: dict[str, Clone] = {}
     for ast_node in ast.walk(module):
         if is_handle_node(ast_node):
@@ -71,18 +77,10 @@ if __name__ == "__main__":
             print()
         print()
 
-# Будем перебирать все допустимые конструкции и искать клоны 1, 2 и 3 типов
-# затем надо проводить фильтрацию исходя из заданных параметров:
-# - количество клонов;
-# - длина клонов.
-#
-# А также фильтровать клоны, входящие в другие клоны
-
 # Задачи:
-# 1. Определить все допустимые конструкции (возможно взять те, которые определены для идиом)
-# 2. Реализовать алгоритм упрощения блока кода, для его анализа и поиска клонов всех типов
-    # 2.1. Добавить настройку для поиска всех типов клонов или только конкретных
-# 3. Определить параметры фильтрации
-# 4. Создать алгоритм фильтрации по заданным параметрам
-# 5. Реализовать алгоритм фильтрации входящих друг в друга блоков кода
-# 6. Поиск исходных блоков, для их дальнейшей замены
+# 1. Реализовать алгоритм упрощения блока кода, для его анализа и поиска клонов всех типов
+    # 1.1. Добавить настройку для поиска всех типов клонов или только конкретных
+# 2. Определить параметры фильтрации
+# 3. Создать алгоритм фильтрации по заданным параметрам
+# 4. Реализовать алгоритм фильтрации входящих друг в друга блоков кода
+# 5. Поиск исходных блоков, для их дальнейшей замены
