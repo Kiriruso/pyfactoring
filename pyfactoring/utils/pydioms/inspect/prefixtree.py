@@ -5,7 +5,7 @@ import ast
 from typing import Iterable
 
 from pyfactoring.utils.pydioms.inspect.types import CountingType
-from pyfactoring.utils.pydioms.inspect.inspector import (
+from pyfactoring.utils.pydioms.inspect.inspect import (
     make_inspected_tree,
     ASTInspectedNode,
     ASTInspectedLeaf,

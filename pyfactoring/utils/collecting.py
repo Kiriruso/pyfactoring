@@ -6,7 +6,7 @@ from pathlib import Path
 from platform import system
 from typing import Iterable
 
-from pyfactoring.utils.files.exceptions import FilePathException
+from pyfactoring.exceptions import FileOrDirNotFoundError
 
 
 _SYSTEM = system()
@@ -33,7 +33,7 @@ def collect_filepaths(
     if isfile(path) and path.endswith(".txt"):
         return _collect_from_file(path, exclude_dirs, exclude_files)
 
-    raise FilePathException(f"Путь '{path}' не ведет к директории или файлу[.txt | .py]")
+    raise FileOrDirNotFoundError(f"Path does not lead to any dirs or file[.txt | .py]: '{path}'")
 
 
 def _filter_filepaths(
