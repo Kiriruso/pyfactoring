@@ -8,7 +8,7 @@ from os.path import isdir, isfile
 from pathlib import Path
 from platform import system
 
-from pyfactoring.exceptions import FilePathError
+from pyfactoring.exceptions import FileOrDirNotFoundError
 
 _SYSTEM = system()
 
@@ -34,7 +34,7 @@ def collect_filepaths(
     if isfile(path) and path.endswith(".txt"):
         return _collect_from_file(path, exclude_dirs, exclude_files)
 
-    raise FilePathError(f"Path does not lead to any dirs or file[.txt | .py]: '{path}'")
+    raise FileOrDirNotFoundError(f"Path does not lead to any dirs or file[.txt | .py]: '{path}'")
 
 
 def _filter_filepaths(

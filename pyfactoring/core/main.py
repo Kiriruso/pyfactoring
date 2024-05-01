@@ -1,7 +1,7 @@
 import shutil
 import sys
 
-from pyfactoring import extracting, files, inspect
+from pyfactoring import extracting, inspect, collect_filepaths
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
 
     print()
 
-    filepaths = files.collect_filepaths(target, exclude_dirs=exclude_dirs, exclude_files=exclude_files)
+    filepaths = collect_filepaths(target, exclude_dirs=exclude_dirs, exclude_files=exclude_files)
     modules = [extracting.extract_ast(filepath) for filepath in filepaths]
 
     prefix_trees = inspect.make_prefix_trees(modules)

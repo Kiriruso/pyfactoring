@@ -5,7 +5,7 @@ import ast
 from pathlib import Path
 from typing import Generator
 
-from pyfactoring.utils.pydioms.inspect.inspector import ASTInspectedLeaf, ASTInspectedNode
+from pyfactoring.utils.pydioms.inspect.inspect import ASTInspectedLeaf, ASTInspectedNode
 
 
 def extract_source(filepath: Path) -> str:

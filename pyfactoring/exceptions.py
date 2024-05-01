@@ -1,5 +1,11 @@
-__all__ = ["FilePathError"]
+from dataclasses import dataclass
 
 
-class FilePathError(Exception):
+@dataclass(frozen=True)
+class PyfactoringException(Exception):
+    text: str
+
+
+@dataclass(frozen=True)
+class FileOrDirNotFoundError(PyfactoringException):
     """Недействительный путь к файлу или директории проекта"""

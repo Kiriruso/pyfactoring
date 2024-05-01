@@ -3,7 +3,7 @@ __all__ = ["make_prefix_trees", "SubtreeVariant", "PrefixTree", "PrefixNode", "P
 import ast
 from typing import Iterable
 
-from pyfactoring.utils.pydioms.inspect.inspector import (
+from pyfactoring.utils.pydioms.inspect.inspect import (
     ASTInspectedLeaf,
     ASTInspectedNode,
     make_inspected_tree,

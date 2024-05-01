@@ -1,9 +1,9 @@
-from pyfactoring.utils.pydioms.inspect.inspector import (
+from pyfactoring.utils.pydioms.inspect.inspect import (
     ASTInspectedLeaf,
     ASTInspectedNode,
     make_inspected_tree,
 )
-from pyfactoring.utils.pydioms.inspect.prefix import (
+from pyfactoring.utils.pydioms.inspect.prefixtree import (
     PrefixLeaf,
     PrefixNode,
     PrefixTree,
