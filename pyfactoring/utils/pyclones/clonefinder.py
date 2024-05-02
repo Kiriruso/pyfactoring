@@ -2,15 +2,18 @@ import ast
 import copy
 import pathlib
 
-from pyfactoring import extracting
-from pyfactoring.config import pyclones_settings
+from dataclasses import dataclass, field
+
+from pyfactoring.settings import pyclones_settings
+from pyfactoring.exceptions import UndefinedModeError
+from pyfactoring.utils.pydioms import extracting
 from pyfactoring.utils.pyclones.templater import Templater
 
 MIN_CLONE_COUNT = pyclones_settings.count
 MIN_CLONE_LENGTH = pyclones_settings.length
 DEBUG_MODE = pyclones_settings.debug_mode
 
-HANDLE_ASTS = (
+ALLOWED_NODES = (
     "If",
     "While",
     "For",
@@ -25,57 +28,84 @@ HANDLE_ASTS = (
 )
 
 
-class Clone:
-    def __init__(self, node: ast.AST = None):
-        self.count: int = 1
-        self.instances: list[ast.AST] = []
+@dataclass(frozen=True)
+class CodeBlockClone:
+    source: str = field(repr=False)
+    lineno: int
+    end_lineno: int
+    colno: int
+    end_colno: int
 
-        if node is not None:
-            self.instances.append(node)
+
+class CloneFinder:
+    def __init__(self):
+        self._templater: Templater = Templater()
+
+    def find_all(self, root: ast.AST) -> dict[str, list[CodeBlockClone]]:
+        global MIN_CLONE_LENGTH, MIN_CLONE_COUNT
+        clones: dict[str, list[CodeBlockClone]] = {}
+
+        for node in ast.walk(root):
+            if isinstance(node, ast.Module):
+                self._templater.find_all_imports(node)
+                continue
+
+            if not self._is_allowed_node(node):
+                continue
+
+            if node.end_lineno - node.lineno < MIN_CLONE_LENGTH:
+                continue
+
+            clone = CodeBlockClone(
+                self._get_source(node),
+                node.lineno, node.end_lineno,
+                node.col_offset, node.end_col_offset
+            )
+
+            to_template = copy.deepcopy(node)
+            template = self._get_source(self._templater.visit(to_template))
+            del to_template
+
+            if template not in clones:
+                clones.setdefault(template, [])
+            clones[template].append(clone)
+
+        return {t: cs for t, cs in clones.items() if len(cs) >= MIN_CLONE_COUNT}
+
+    @staticmethod
+    def _get_source(node: ast.AST) -> str:
+        global DEBUG_MODE
+
+        match DEBUG_MODE:
+            case "code":
+                return ast.unparse(node)
+            case "tree":
+                return ast.dump(node, indent=4)
+            case _:
+                raise UndefinedModeError(
+                    f"Режим извлечения шаблона не задан или некорректен: {DEBUG_MODE}"
+                )
+
+    @staticmethod
+    def _is_allowed_node(node: ast.AST):
+        global ALLOWED_NODES
+        return type(node).__name__ in ALLOWED_NODES
 
 
-def is_handle_node(node: ast.AST) -> bool:
-    return type(node).__name__ in HANDLE_ASTS
+def main():
+    target = pathlib.Path(__file__).parents[3] / "test" / "common" / "test_all.py"
+    module = extracting.extract_ast(target)
+    finder = CloneFinder()
+
+    for template, clones in finder.find_all(module).items():
+        print(template, end='\n\n')
+        for clone in clones:
+            print(clone.source, end='\n\n')
+        print()
 
 
 if __name__ == "__main__":
-    target = pathlib.Path(__file__).parents[3] / "test" / "common" / "simple.py"
-    module = extracting.extract_ast(target)
-    templater = Templater()
-
-    # поиск импортов
-    imports: list[str] = []
-    for ast_node in ast.walk(module):
-        if isinstance(ast_node, ast.alias):
-            imports.append(ast_node.asname if ast_node.asname else ast_node.name)
-
-    templater.add_imports(imports)
-
-    # поиск клонов
-    clones: dict[str, Clone] = {}
-    for ast_node in ast.walk(module):
-        if is_handle_node(ast_node):
-            if ast_node.end_lineno - ast_node.lineno < MIN_CLONE_LENGTH:
-                continue
-
-            dump = ast.unparse(templater.visit(copy.deepcopy(ast_node)))
-
-            if dump in clones:
-                clones[dump].count += 1
-                clones[dump].instances.append(ast_node)
-            else:
-                clones.setdefault(dump, Clone(ast_node))
-
-    for dump, info in clones.items():
-        if info.count <= MIN_CLONE_COUNT:
-            continue
-
-        print(dump)
-        print()
-        for instance in info.instances:
-            print(ast.unparse(instance))
-            print()
-        print()
+    main()
 
 # Задачи:
 # 1. Реализовать алгоритм упрощения блока кода, для его анализа и поиска клонов всех типов

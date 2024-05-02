@@ -10,7 +10,7 @@ select = [
     "W",
     "N",
 ]
-ignore = ["F403"]
+ignore = ["F403", "N802"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -1,7 +1,7 @@
 class Scope:
     __slots__ = ["is_local", "is_global", "_variables", "_constants", "_imports", "_locals"]
 
-    COMMON_KEYWORDS = ("self", "cls")
+    COMMON_KEYWORDS = ("self", "cls", "_")
 
     def __init__(self, outer: "Scope" = None, *, global_: bool = False):
         self.is_local: bool = False
@@ -35,8 +35,11 @@ class Scope:
     def locals(self) -> list[str]:
         return self._locals.keys()
 
-    def add_imports(self, imports: list[str]):
+    def update_imports(self, imports: list[str]):
         self._imports.update(imports)
+
+    def clear_imports(self):
+        self._imports.clear()
 
     def get_name(self, id_: str) -> str:
         if id_ in self.COMMON_KEYWORDS or id_ in self._imports:

@@ -12,9 +12,6 @@ class Templater(ast.NodeTransformer):
         self._scope: Scope = Scope(global_=True)
         self._scope_stack: list[Scope] = []
 
-    def add_imports(self, imports: list[str]):
-        self._scope.add_imports(imports)
-
     @contextlib.contextmanager
     def scope(self):
         self._scope_stack.append(self._scope)
@@ -28,6 +25,11 @@ class Templater(ast.NodeTransformer):
             else:
                 self._scope = Scope()
 
+    def find_all_imports(self, module: ast.Module):
+        self._scope.clear_imports()
+        imports = self._find_all_imports(module)
+        self._scope.update_imports(imports)
+
     def visit_Assign(self, node: ast.Assign) -> ast.AST:
         node.targets = self._templatize(node.targets)
         node.value = self._templatize(node.value)
@@ -35,7 +37,6 @@ class Templater(ast.NodeTransformer):
 
     def visit_AugAssign(self, node: ast.AugAssign) -> ast.AST:
         node.target = self._templatize(node.target)
-        # todo: пропустим изменение оператора
         node.value = self._templatize(node.value)
         return node
 
@@ -145,29 +146,20 @@ class Templater(ast.NodeTransformer):
 
     def visit_Compare(self, node: ast.Compare) -> ast.AST:
         node.left = self._templatize(node.left)
-        # todo: пропустим изменение оператора
         node.comparators = self._templatize(node.comparators)
         return node
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> ast.AST:
         node.operand = self._templatize(node.operand)
-        # todo: пропустим изменение оператора
         return node
 
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         node.left = self._templatize(node.left)
-        # todo: пропустим изменение оператора
         node.right = self._templatize(node.right)
         return node
 
     def visit_BoolOp(self, node: ast.BoolOp) -> ast.AST:
         node.values = self._templatize(node.values)
-        # todo: пропустим изменение оператора
-        return node
-
-    def visit_Module(self, node: ast.Module) -> ast.AST:
-        with self.scope():
-            node.body = self._templatize(node.body)
         return node
 
     def visit_If(self, node: ast.If) -> ast.AST:
@@ -203,7 +195,9 @@ class Templater(ast.NodeTransformer):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
         with self.scope():
-            node.decorator_list = self._templatize(node.decorator_list)
+            for decorator in node.decorator_list:
+                if isinstance(decorator, ast.Call):
+                    decorator = self._templatize(decorator)
             with self.scope():
                 node.args = self.visit(node.args)
                 node.body = self._templatize(node.body)
@@ -248,8 +242,6 @@ class Templater(ast.NodeTransformer):
             with self.scope():
                 node.finalbody = self._templatize(node.finalbody)
 
-        # todo: реализовать шаблонизатор Exception'ов
-
         return node
 
     def visit_TryStar(self, node: ast.TryStar) -> ast.AST:
@@ -258,8 +250,9 @@ class Templater(ast.NodeTransformer):
     def visit_ExceptHandler(self, node: ast.ExceptHandler) -> ast.AST:
         with self.scope():
             if node.name:
-                node.name = self._scope.get_name(node.name)  # todo: мб убрать
-            node.body = self._templatize(node.body)
+                node.name = self._scope.get_name(node.name)
+            with self.scope():
+                node.body = self._templatize(node.body)
         return node
 
     def visit_Match(self, node: ast.Match) -> ast.AST:
@@ -351,7 +344,10 @@ class Templater(ast.NodeTransformer):
         node.target = self._templatize(node.target)
 
         local_state = self._scope.is_local
-        self._scope.is_local = isinstance(node.iter, ast.Name) and node.iter.id not in self._scope.variables
+        self._scope.is_local = (
+            isinstance(node.iter, ast.Name)
+            and node.iter.id not in self._scope.variables
+        )
         node.iter = self._templatize(node.iter)
 
         self._scope.is_local = local_state
@@ -369,7 +365,7 @@ class Templater(ast.NodeTransformer):
             case ast.Name:
                 node.id = self._scope.get_name(node.id)
             case ast.Starred:
-                node.value.id = self._scope.get_name(node.value.id)
+                node.value = self._templatize(node.value)
             case ast.arg:
                 node.arg = self._scope.get_name(node.arg)
             case ast.Constant:
@@ -403,3 +399,11 @@ class Templater(ast.NodeTransformer):
                 node.orelse = self._templatize(node.orelse)
 
         return node
+
+    @staticmethod
+    def _find_all_imports(node: ast.AST) -> list[str]:
+        imports: list[str] = []
+        for node in ast.walk(node):
+            if isinstance(node, ast.alias):
+                imports.append(node.asname if node.asname else node.name)
+        return imports
