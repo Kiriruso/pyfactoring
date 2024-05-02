@@ -2,13 +2,14 @@ __all__ = ["collect_filepaths"]
 
 import re
 
-from typing import Iterable
 from os import walk
 from os.path import isdir, isfile
 from pathlib import Path
 from platform import system
+from typing import Iterable
 
 from pyfactoring.exceptions import FileOrDirNotFoundError
+
 
 _SYSTEM = system()
 

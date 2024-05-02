@@ -10,7 +10,7 @@ select = [
     "W",
     "N",
 ]
-ignore = ["F403"]
+ignore = ["F403", "N802"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -29,4 +29,4 @@ length = 10
 [tool.pyfactoring.pyclones]
 count = 0
 length = 1
-debug_mode = "tree"
+debug_mode = "code"
