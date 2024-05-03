@@ -361,6 +361,9 @@ class Templater(ast.NodeTransformer):
         return list(map(self._templatize, body))
 
     def _templatize(self, node: ast.AST):
+        if node is None:
+            return node
+
         match type(node):
             case ast.Name:
                 node.id = self._scope.get_name(node.id)
@@ -379,6 +382,7 @@ class Templater(ast.NodeTransformer):
                 node = self.visit_collection(node)
             case _:
                 return self.visit(node)
+
         return node
 
     def _if_for_while_visit(self, node: ast.If | ast.IfExp | ast.While | ast.For) -> ast.AST:
