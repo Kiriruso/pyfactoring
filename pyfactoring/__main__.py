@@ -1,9 +1,16 @@
 import shutil
 import sys
 
-from pyfactoring import collect_filepaths, extract_ast, extract_idioms, ast_inspect, prefixtree
+from pyfactoring import (
+    collect_filepaths,
+    extract_ast, extract_idioms,
+    ast_inspect, prefixtree
+)
 
-if __name__ == '__main__':
+from pyfactoring.settings import common_settings
+
+
+def idiom_check():
     sys.setrecursionlimit(sys.getrecursionlimit() * 100)
 
     target = input("Path to dir or file[.txt | .py]: ")
@@ -32,8 +39,6 @@ if __name__ == '__main__':
 
     for filepath, prefix_tree in prefix_trees.items():
         idioms = extract_idioms(prefix_tree)
-        if not idioms:
-            continue
 
         print(f"IDIOMS    |  {len(idioms)}")
         print(f"FILEPATH  |  {filepath}")
@@ -43,9 +48,14 @@ if __name__ == '__main__':
             print(f"\n{info.state.idiom}\n")
             for i in info.primary_ids:
                 inspected_tree = prefix_tree.inspected_trees[i]
-                print(f"{filepath}:{inspected_tree.ast_node.lineno}:{inspected_tree.ast_node.col_offset}")
+                print(
+                    f"{filepath}:{inspected_tree.ast_node.lineno}:{inspected_tree.ast_node.col_offset}")
                 for source in ast_inspect.source_from_inspected_tree(filepath, inspected_tree):
                     print(source)
                 print()
 
         print("=" * terminal_size.columns)
+
+
+if __name__ == '__main__':
+    print(common_settings)

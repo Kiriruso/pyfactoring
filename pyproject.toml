@@ -18,14 +18,17 @@ indent-style = "space"
 
 
 [tool.pyfactoring]
-color = true
+action = "check"
 diff = true
-typed = false
+color = true
+workers = 1
+exclude_dirs = []
+exclude_files = []
 
 [tool.pyfactoring.pydioms]
 count = 5
 length = 10
-debug = false
+verbose = false
 
 [tool.pyfactoring.pyclones]
 count = 0

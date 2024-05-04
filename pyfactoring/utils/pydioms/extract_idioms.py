@@ -65,7 +65,7 @@ def extract_idioms(tree: PrefixTree) -> dict[frozenset[int], IdiomInfo]:
         if idiom_state in idioms:
             filtered_idioms[idiom_state] = idioms[idiom_state]
 
-    if pydioms_settings.debug:
+    if pydioms_settings.verbose:
         print(f"rejected: {len(rejected_idioms):>3}")
         print(f"unfiltered: {len(idioms)}")
         print(f"filtered: {len(filtered_idioms):>3}")
