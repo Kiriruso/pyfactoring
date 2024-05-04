@@ -1,14 +1,15 @@
 __all__ = ["make_prefix_trees", "SubtreeVariant", "PrefixTree", "PrefixNode", "PrefixLeaf"]
 
 import ast
-from typing import Iterable
+from collections.abc import Iterable
+from dataclasses import dataclass, field
 
-from pyfactoring.utils.pydioms.inspect.inspect import (
+from pyfactoring.utils.pydioms.ast_inspect import (
     ASTInspectedLeaf,
     ASTInspectedNode,
     make_inspected_tree,
 )
-from pyfactoring.utils.pydioms.inspect.types import CountingType
+from pyfactoring.utils.pydioms.ast_types import CountingType
 
 
 def make_prefix_trees(trees: Iterable[ASTInspectedNode | ast.AST]) -> list["PrefixTree"]:
@@ -20,30 +21,26 @@ def make_prefix_trees(trees: Iterable[ASTInspectedNode | ast.AST]) -> list["Pref
     return prefix_trees
 
 
+@dataclass
 class SubtreeVariant:
-    def __init__(self, ast_: set[ast.AST] = None, count_as: CountingType = CountingType.NOT_COUNTED):
-        self.ids: set[int] = set()
-        self.children: list[PrefixNode | PrefixLeaf] = list()
-        self.count_as: CountingType = count_as
-        self.ast_variants: set[ast.AST] = ast_ if ast_ is not None else set()
+    ast_variants: set[ast.AST] = field(default_factory=set)
+    count_as: CountingType = field(default=CountingType.NOT_COUNTED)
+    ids: set[int] = field(default_factory=set, init=False, repr=False)
+    children: list["PrefixNode | PrefixLeaf"] = field(default_factory=list, init=False, repr=False)
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(count_as={self.count_as.name})"
-
-    def add(self, subtree_id: int):
+    def add_id(self, subtree_id: int):
         self.ids.add(subtree_id)
 
-    def append(self, prefix_node_or_leaf: "PrefixNode | PrefixLeaf"):
+    def add_node(self, prefix_node_or_leaf: "PrefixNode | PrefixLeaf"):
         self.children.append(prefix_node_or_leaf)
 
 
+@dataclass
 class PrefixLeaf:
-    def __init__(self):
-        self.value_to_ids: dict[str, set[int]] = dict()
-        self.id_to_values: dict[int, tuple[str, CountingType]] = dict()
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+    value_to_ids: dict[str, set[int]] = field(default_factory=dict, init=False, repr=False)
+    id_to_values: dict[int, tuple[str, CountingType]] = field(
+        default_factory=dict, init=False, repr=False
+    )
 
     def add_subtree(self, inspected_leaf: ASTInspectedLeaf, subtree_id: int):
         self.value_to_ids.setdefault(inspected_leaf.name, set())
@@ -63,13 +60,10 @@ class PrefixLeaf:
         return None, ids, CountingType.OPERAND
 
 
+@dataclass
 class PrefixNode:
-    def __init__(self):
-        self.name_to_variants: dict[str, SubtreeVariant] = dict()
-        self.id_to_node_name: dict[int, str] = dict()
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+    name_to_variants: dict[str, SubtreeVariant] = field(default_factory=dict, init=False, repr=False)
+    id_to_node_name: dict[int, str] = field(default_factory=dict, init=False, repr=False)
 
     def add_subtree(self, subtree_root: ASTInspectedNode, subtree_id: int):
         variant = self.variant_by_name(subtree_root.name)
@@ -78,11 +72,11 @@ class PrefixNode:
             variant = self._returning_variant_insert(subtree_root)
             for inspected_node_or_leaf in subtree_root.children:
                 if isinstance(inspected_node_or_leaf, ASTInspectedNode):
-                    variant.append(PrefixNode())
+                    variant.add_node(PrefixNode())
                 else:
-                    variant.append(PrefixLeaf())
+                    variant.add_node(PrefixLeaf())
 
-        variant.add(subtree_id)
+        variant.add_id(subtree_id)
         self.id_to_node_name[subtree_id] = subtree_root.name
 
         for prefix_node_or_leaf, inspected_node_or_leaf in zip(variant.children, subtree_root.children):
@@ -111,36 +105,27 @@ class PrefixNode:
     def _returning_variant_insert(
         self, subtree_root: ASTInspectedNode | ASTInspectedLeaf
     ) -> SubtreeVariant:
-        variant = SubtreeVariant(subtree_root.ast, subtree_root.count_as)
+        variant = SubtreeVariant(subtree_root.ast_node, subtree_root.count_as)
         self.name_to_variants[subtree_root.name] = variant
         return variant
 
 
+@dataclass
 class PrefixTree:
-    def __init__(self, trees: Iterable[ASTInspectedNode | ast.AST] | None = None):
-        self.root: PrefixNode = PrefixNode()
+    trees: Iterable[ASTInspectedNode | ast.AST] = field(default_factory=list)
 
-        self.total_leafs: int = 0
-        self.total_operands: int = 0
-        self.total_operators: int = 0
+    total_operands: int = field(default=0, init=False)
+    total_operators: int = field(default=0, init=False)
 
-        self.id_to_freq: dict[int, int] = dict()
-        self.operand_names: set[str] = set()
-        self.inspected_trees: dict[int, ASTInspectedNode] = dict()
+    root: PrefixNode = field(default_factory=PrefixNode, init=False, repr=False)
+    total_leafs: int = field(default=0, init=False, repr=False)
+    id_to_freq: dict[int, int] = field(default_factory=dict, init=False, repr=False)
+    operand_names: set[str] = field(default_factory=set, init=False, repr=False)
+    inspected_trees: dict[int, ASTInspectedNode] = field(default_factory=dict, init=False, repr=False)
 
-        if trees is None:
-            return
-
-        for tree in trees:
+    def __post_init__(self):
+        for tree in self.trees:
             self.add_tree(tree)
-
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}("
-            f"operands={self.total_operands}, "
-            f"operators={self.total_operators}"
-            f")"
-        )
 
     def add_tree(self, root: ASTInspectedNode | ast.AST):
         if isinstance(root, ASTInspectedNode):

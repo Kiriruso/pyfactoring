@@ -25,8 +25,9 @@ typed = false
 [tool.pyfactoring.pydioms]
 count = 5
 length = 10
+debug = false
 
 [tool.pyfactoring.pyclones]
 count = 0
 length = 1
-debug_mode = "code"
+template_mode = "code"

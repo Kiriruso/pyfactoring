@@ -1,5 +1,4 @@
 import ast
-
 from dataclasses import dataclass
 from enum import IntEnum
 
@@ -10,7 +9,7 @@ class CountingType(IntEnum):
     OPERAND = 2
 
 
-@dataclass
+@dataclass(frozen=True)
 class ASTNodeInfo:
     """
     Представляет дополнительную информацию об узле AST

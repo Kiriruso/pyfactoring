@@ -1,9 +1,13 @@
 __all__ = ["make_inspected_tree", "ASTInspectedNode", "ASTInspectedLeaf"]
 
 import ast
-import warnings
+from collections.abc import Generator
+from dataclasses import dataclass, field
+from pathlib import Path
+from warnings import warn
 
-from pyfactoring.utils.pydioms.inspect.types import (
+
+from pyfactoring.utils.pydioms.ast_types import (
     AST_NODES_INFO,
     AST_PRESENTATION_LEAVES,
     AST_REALIZE_SUBTREE_NODES,
@@ -12,37 +16,36 @@ from pyfactoring.utils.pydioms.inspect.types import (
 )
 
 
+@dataclass
 class ASTInspectedLeaf:
     # todo: написать назначение класса
     """"""
 
-    __slots__ = ["name", "count_as", "nodes", "total_operands", "total_operators", "ast"]
+    name: str = field(default="None")
+    count_as: CountingType = field(default=CountingType.NOT_COUNTED)
 
-    def __init__(self, name: str = "None", count_as: CountingType = CountingType.NOT_COUNTED):
-        self.name: str = name
-        self.count_as: CountingType = count_as
-        self.nodes: int = 1
-        self.total_operands: int = int(self.count_as == CountingType.OPERAND)
-        self.total_operators: int = int(self.count_as == CountingType.OPERATOR)
-        self.ast: ast.AST | None = None
+    nodes: int = field(default=1, init=False, repr=False)
+    total_operands: int = field(default=0, init=False, repr=False)
+    total_operators: int = field(default=0, init=False, repr=False)
+    ast_node: ast.AST = field(default=None, init=False, repr=False)
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(name={self.name}, count_as={self.count_as.name})"
+    def __post_init__(self):
+        self.total_operands = int(self.count_as == CountingType.OPERAND)
+        self.total_operators = int(self.count_as == CountingType.OPERATOR)
 
     def is_operand(self) -> bool:
         return self.count_as == CountingType.OPERAND
 
 
+@dataclass
 class ASTInspectedNode(ASTInspectedLeaf):
     # todo: написать назначение класса
     """"""
 
-    __slots__ = ["realize_subtree", "children"]
-
-    def __init__(self, name: str = "None", count_as: CountingType = CountingType.NOT_COUNTED):
-        super().__init__(name, count_as)
-        self.realize_subtree: bool = False
-        self.children: list[ASTInspectedNode | ASTInspectedLeaf] = list()
+    realize_subtree: bool = field(default=False, init=False, repr=False)
+    children: list["ASTInspectedNode | ASTInspectedLeaf"] = field(
+        default_factory=list, init=False, repr=False
+    )
 
     def __iter__(self):
         return iter(self.children)
@@ -52,6 +55,54 @@ class ASTInspectedNode(ASTInspectedLeaf):
         self.nodes += inspect_node.nodes
         self.total_operators += inspect_node.total_operators
         self.total_operands += inspect_node.total_operands
+
+def dump_inspected_tree(
+    root: ASTInspectedNode | ASTInspectedLeaf, *, indent: int = 0, subindent: int = 0
+) -> Generator[str, None, None]:
+    """Построчное получение строкового представления проинспектированного AST
+
+    :param root: узел с которого начинается обход
+    :param indent: базовый отступ слева
+    :param subindent: дополнительный отступ слева, который добавляется к дочерним узлам
+    :return: узел дерева представленный в виде строки с отступом
+    """
+
+    yield f"{' ' * indent}{root}"
+
+    while True:
+        if not isinstance(root, ASTInspectedNode):
+            return
+        for node in root:
+            yield from dump_inspected_tree(node, indent=indent + subindent, subindent=subindent)
+        return
+
+
+def source_from_inspected_tree(
+        filepath: str | Path, root: ASTInspectedNode
+) -> Generator[str, None, None]:
+    """Поиск частей исходного кода, соответствующих узлам проинспектированного AST,
+    реализующего поддеревья, например: For, ...
+
+    :param filepath: путь к файлу с исходным кодом
+    :param root: узел с которого начинается поиск
+    :return: часть исходного кода соответствующая узлу, реализующему поддеревья
+    """
+    with open(filepath, "r", encoding="utf-8") as code:
+        source = code.read()
+
+    def source_from_(root_: ASTInspectedNode | ASTInspectedLeaf) -> Generator[str, None, None]:
+        nonlocal source
+
+        while True:
+            if isinstance(root_, ASTInspectedNode) and root_.realize_subtree:
+                yield ast.get_source_segment(source, root_.ast_node)
+                return
+            if isinstance(root_, ASTInspectedNode):
+                for node in root_:
+                    yield from source_from_(node)
+            return
+
+    yield from source_from_(root)
 
 
 def make_inspected_tree(root) -> ASTInspectedNode | ASTInspectedLeaf:
@@ -76,12 +127,12 @@ def make_inspected_tree(root) -> ASTInspectedNode | ASTInspectedLeaf:
     ast_info = AST_NODES_INFO.get(ast_name)
 
     if ast_info is None:
-        warnings.warn(f"Syntax is not supported: '{ast_name}'")
+        warn(f"Syntax is not supported: '{ast_name}'")
         return ASTInspectedNode()
 
     inspected_node = ASTInspectedNode(ast_info.name, ast_info.count_as)
     inspected_node.realize_subtree = ast_info.name in AST_REALIZE_SUBTREE_NODES
-    inspected_node.ast = root
+    inspected_node.ast_node = root
 
     for ast_child_name in ast_info.children_names:
         ast_child_children = ast_body.get(ast_child_name)
@@ -94,7 +145,7 @@ def make_inspected_tree(root) -> ASTInspectedNode | ASTInspectedLeaf:
             for ast_child_child in ast_child_children:
                 inspected_child_child = make_inspected_tree(ast_child_child)
                 inspected_child_child.realize_subtree |= child_realize_subtree
-                inspected_child_child.ast = ast_child_child
+                inspected_child_child.ast_node = ast_child_child
 
                 inspected_list.append(inspected_child_child)
             inspected_list = _make_list(inspected_list)

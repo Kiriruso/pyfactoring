@@ -1,6 +1,5 @@
 from pyfactoring.utils import (
-    extracting, inspect, collect_filepaths,
-    CodeBlockClone, CloneFinder,
-    Scope, Templater,
-    MIN_CLONE_LENGTH, MIN_CLONE_COUNT, ALLOWED_NODES
+    collect_filepaths, extract_ast, extract_source,
+    idiom, ast_inspect, ast_types, prefixtree, extract_idioms,
+    CodeBlockClone, CloneFinder, Templater, Scope
 )

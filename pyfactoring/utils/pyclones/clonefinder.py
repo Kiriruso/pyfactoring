@@ -1,31 +1,13 @@
 import ast
 import copy
 import pathlib
-
+from collections.abc import Collection
 from dataclasses import dataclass, field
 
-from pyfactoring.settings import pyclones_settings
 from pyfactoring.exceptions import UndefinedModeError
-from pyfactoring.utils.pydioms import extracting
+from pyfactoring.settings import pyclones_settings
 from pyfactoring.utils.pyclones.templater import Templater
-
-MIN_CLONE_COUNT = pyclones_settings.count
-MIN_CLONE_LENGTH = pyclones_settings.length
-DEBUG_MODE = pyclones_settings.debug_mode
-
-ALLOWED_NODES = (
-    "If",
-    "While",
-    "For",
-    "AsyncFor",
-    "With",
-    "AsyncWith",
-    "FunctionDef",
-    "AsyncFunctionDef",
-    "Try",
-    "TryStar",
-    "Match",
-)
+from pyfactoring.utils.extracting import extract_ast
 
 
 @dataclass(frozen=True)
@@ -37,23 +19,41 @@ class CodeBlockClone:
     end_colno: int
 
 
+@dataclass
 class CloneFinder:
-    def __init__(self):
-        self._templater: Templater = Templater()
+    allowed_nodes: Collection[str] = field(default=None)
+    templater: Templater = field(default_factory=Templater)
+
+    def __post_init__(self):
+        if self.allowed_nodes is None:
+            self.allowed_nodes: tuple[str] = (
+                "If",
+                "While",
+                "For",
+                "AsyncFor",
+                "With",
+                "AsyncWith",
+                "FunctionDef",
+                "AsyncFunctionDef",
+                "Try",
+                "TryStar",
+                "Match",
+            )
+        else:
+            self.allowed_nodes: tuple[str] = tuple(self.allowed_nodes)
 
     def find_all(self, root: ast.AST) -> dict[str, list[CodeBlockClone]]:
-        global MIN_CLONE_LENGTH, MIN_CLONE_COUNT
         clones: dict[str, list[CodeBlockClone]] = {}
 
         for node in ast.walk(root):
             if isinstance(node, ast.Module):
-                self._templater.find_all_imports(node)
+                self.templater.find_all_imports(node)
                 continue
 
             if not self._is_allowed_node(node):
                 continue
 
-            if node.end_lineno - node.lineno < MIN_CLONE_LENGTH:
+            if node.end_lineno - node.lineno < pyclones_settings.length:
                 continue
 
             clone = CodeBlockClone(
@@ -63,38 +63,39 @@ class CloneFinder:
             )
 
             to_template = copy.deepcopy(node)
-            template = self._get_source(self._templater.visit(to_template))
+            template = self._get_source(self.templater.visit(to_template))
             del to_template
 
             if template not in clones:
                 clones.setdefault(template, [])
             clones[template].append(clone)
 
-        return {t: cs for t, cs in clones.items() if len(cs) >= MIN_CLONE_COUNT}
+        return {
+            t: cs
+            for t, cs in clones.items()
+            if len(cs) >= pyclones_settings.count
+        }
+
+    def _is_allowed_node(self, node: ast.AST):
+        return type(node).__name__ in self.allowed_nodes
 
     @staticmethod
     def _get_source(node: ast.AST) -> str:
-        global DEBUG_MODE
-
-        match DEBUG_MODE:
+        match pyclones_settings.template_mode:
             case "code":
                 return ast.unparse(node)
             case "tree":
                 return ast.dump(node, indent=4)
             case _:
                 raise UndefinedModeError(
-                    f"Режим извлечения шаблона не задан или некорректен: {DEBUG_MODE}"
+                    f"Template extraction mode is not specified or is incorrect: "
+                    f"{pyclones_settings.template_mode}"
                 )
-
-    @staticmethod
-    def _is_allowed_node(node: ast.AST):
-        global ALLOWED_NODES
-        return type(node).__name__ in ALLOWED_NODES
 
 
 def main():
     target = pathlib.Path(__file__).parents[3] / "test" / "common" / "test_all.py"
-    module = extracting.extract_ast(target)
+    module = extract_ast(target)
     finder = CloneFinder()
 
     for template, clones in finder.find_all(module).items():

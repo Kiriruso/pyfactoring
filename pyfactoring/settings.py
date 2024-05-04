@@ -2,8 +2,8 @@ __all__ = ["common_settings", "pydioms_settings", "pyclones_settings"]
 
 import os
 import tomllib
-
 from typing import Annotated, Literal
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -19,12 +19,13 @@ class CommonSettings(BaseSettings):
 class PydiomsSettings(CommonSettings):
     count: Annotated[int, Field(ge=0, default=5)]
     length: Annotated[int, Field(gt=0, default=10)]
+    debug: Annotated[bool, Field(default=False)]
 
 
 class PyclonesSettings(CommonSettings):
     count: Annotated[int, Field(ge=0, default=1)]
     length: Annotated[int, Field(gt=0, default=5)]
-    debug_mode: Literal["tree", "code"] | None = None
+    template_mode: Literal["tree", "code"] | None = None
 
 
 def load_config():

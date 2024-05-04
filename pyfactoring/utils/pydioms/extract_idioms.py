@@ -1,123 +1,21 @@
-__all__ = ["extract_idioms", "Idiom", "IdiomInfo", "IdiomState"]
-
 import math
 
 from pyfactoring.settings import pydioms_settings
-from pyfactoring.utils.pydioms.inspect.prefixtree import PrefixLeaf, PrefixNode, PrefixTree, SubtreeVariant
-from pyfactoring.utils.pydioms.inspect.types import AST_TOTAL_UNIQUE_OPERATORS, CountingType
+from pyfactoring.utils.pydioms.idiom import Idiom, IdiomInfo, IdiomState
+from pyfactoring.utils.pydioms.prefixtree import (
+    PrefixLeaf,
+    PrefixNode,
+    PrefixTree,
+    SubtreeVariant,
+)
+from pyfactoring.utils.pydioms.ast_types import AST_TOTAL_UNIQUE_OPERATORS, CountingType
 
 MIN_IDIOM_COUNT = pydioms_settings.count
 MIN_IDIOM_LENGTH = pydioms_settings.length
 
 
-class Idiom:
-    __slots__ = [
-        "ids",
-        "length",
-        "total_operators",
-        "total_operands",
-        "total_trees",
-        "information",
-        "efficiency",
-        "variant",
-        "selected",
-    ]
-
-    def __init__(self, ids: set[int] = None, total_trees: int = 0, efficiency: float = None):
-        self.ids: set[int] = set() if ids is None else ids
-
-        self.length: int = 0
-        self.total_operators: int = 0
-        self.total_operands: int = 0
-        self.information: float = 0
-
-        self.total_trees: int = total_trees
-        self.efficiency: float | None = efficiency
-
-        self.selected: int | None = None
-        self.variant: SubtreeVariant | None = None
-
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}("
-            f"length={self.length}, "
-            f"trees={self.total_trees}, "
-            f"information={self.information}, "
-            f"efficiency={self.efficiency}, "
-            f"ids={self.ids}"
-            f")"
-        )
-
-
-class IdiomState:
-    __slots__ = ["idiom", "edges", "is_idiom", "_ids"]
-
-    def __init__(self, idiom: Idiom, edges: list[PrefixNode]):
-        self.idiom: Idiom = idiom
-        self.edges: list[PrefixNode | PrefixLeaf] = edges
-        self.is_idiom = False
-
-        self._ids = iter(self.idiom.ids)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(is_idiom={self.is_idiom}, idiom={self.idiom})"
-
-    def __next__(self) -> int:
-        try:
-            return next(self._ids)
-        except StopIteration:
-            return -1
-
-    @property
-    def ids(self) -> set[int]:
-        return self.idiom.ids
-
-    @property
-    def idiom_length(self) -> int:
-        return self.idiom.length
-
-    @property
-    def efficiency(self) -> float:
-        return self.idiom.efficiency
-
-    @property
-    def information(self) -> float:
-        return self.idiom.information
-
-    @property
-    def total_trees(self) -> int:
-        return self.idiom.total_trees
-
-    @property
-    def total_operands(self) -> int:
-        return self.idiom.total_operands
-
-    @property
-    def total_operators(self) -> int:
-        return self.idiom.total_operators
-
-
-class IdiomInfo:
-    __slots__ = ["state", "id", "primary_ids"]
-
-    def __init__(self, state: IdiomState, id_: int):
-        self.state: IdiomState = state
-        self.id: int = id_
-        self.primary_ids: set[int] = {id_}
-
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}(state={self.state}, id={self.id}, primaries={self.primary_ids})"
-        )
-
-    @property
-    def efficiency(self) -> float:
-        return self.state.efficiency
-
-
-def extract_idioms(tree: PrefixTree, *, debug: bool = False) -> dict[frozenset[int], IdiomInfo]:
-    global MIN_IDIOM_COUNT
-    global MIN_IDIOM_LENGTH
+def extract_idioms(tree: PrefixTree) -> dict[frozenset[int], IdiomInfo]:
+    global MIN_IDIOM_COUNT, MIN_IDIOM_LENGTH
 
     if not tree.id_to_freq:
         return {}
@@ -167,8 +65,7 @@ def extract_idioms(tree: PrefixTree, *, debug: bool = False) -> dict[frozenset[i
         if idiom_state in idioms:
             filtered_idioms[idiom_state] = idioms[idiom_state]
 
-    # todo: изменить реализацию флага debug
-    if debug:
+    if pydioms_settings.debug:
         print(f"rejected: {len(rejected_idioms):>3}")
         print(f"unfiltered: {len(idioms)}")
         print(f"filtered: {len(filtered_idioms):>3}")

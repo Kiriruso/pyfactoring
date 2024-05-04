@@ -1,7 +1,6 @@
 __all__ = ["collect_filepaths"]
 
 import re
-
 from os import walk
 from os.path import isdir, isfile
 from pathlib import Path
@@ -10,10 +9,7 @@ from typing import Iterable
 
 from pyfactoring.exceptions import FileOrDirNotFoundError
 
-
-_SYSTEM = system()
-
-match _SYSTEM:
+match system():
     case "Linux" | "Darwin":
         _DIR_PATTERN = r"(?<=\/){}(?=\/)"
         _FILE_PATTERN = r"(?<=\/){}\.py"
@@ -41,18 +37,19 @@ def collect_filepaths(
 def _filter_filepaths(
     filepaths: Iterable[Path], exclude_dirs: Iterable[str] | None, exclude_files: Iterable[str] | None
 ) -> list[Path]:
+    global _DIR_PATTERN, _FILE_PATTERN
+
     if not exclude_dirs and not exclude_files:
         return list(filepaths)
 
     patterns: list[str] = []
-    if exclude_dirs:
-        for exclude_dir in exclude_dirs:
-            pattern = _DIR_PATTERN.format(exclude_dir)
-            patterns.append(pattern)
-    if exclude_files:
-        for exclude_file in exclude_files:
-            pattern = _FILE_PATTERN.format(exclude_file.rstrip(".py"))
-            patterns.append(pattern)
+    for exclude_dir in exclude_dirs:
+        pattern = _DIR_PATTERN.format(exclude_dir)
+        patterns.append(pattern)
+
+    for exclude_file in exclude_files:
+        pattern = _FILE_PATTERN.format(exclude_file.rstrip(".py"))
+        patterns.append(pattern)
 
     return [
         filepath
