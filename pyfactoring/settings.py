@@ -66,6 +66,12 @@ def assign_arguments(config: dict):
         else:
             config["common"]["paths"] = args.paths
 
+        if args.exclude_dirs:
+            config["common"]["exclude_dirs"] = args.exclude_dirs
+
+        if args.exclude_files:
+            config["common"]["exclude_files"] = args.exclude_files
+
     if args.color:
         config["common"]["color"] = True
 
@@ -74,12 +80,6 @@ def assign_arguments(config: dict):
 
     if args.workers:
         config["common"]["workers"] = args.workers
-
-    if args.exclude_dirs:
-        config["common"]["exclude_dirs"] = args.exclude_dirs
-
-    if args.exclude_files:
-        config["common"]["exclude_files"] = args.exclude_files
 
     if args.verbose:
         config["pydioms"]["verbose"] = args.verbose

@@ -7,7 +7,7 @@ from pyfactoring import (
     ast_inspect, prefixtree
 )
 
-from pyfactoring.settings import common_settings
+from pyfactoring.settings import common_settings, pydioms_settings, pyclones_settings
 
 
 def idiom_check():
@@ -59,3 +59,5 @@ def idiom_check():
 
 if __name__ == '__main__':
     print(common_settings)
+    print(pydioms_settings)
+    print(pyclones_settings)
