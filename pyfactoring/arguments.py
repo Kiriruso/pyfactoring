@@ -12,67 +12,55 @@ class _SubcommandHelpFormatter(argparse.RawDescriptionHelpFormatter):
         return parts
 
 
+def _create_base_action_parser(subparser, action: str, is_default: bool = False):
+    _default = "[default]" if is_default else ""
+    _help = f"run {action} on the given files or directories {_default}"
+
+    _action_parser: argparse.ArgumentParser = subparser.add_parser(
+        name=action,
+        prog="pyfactoring",
+        usage=f"%(prog)s [OPTIONS] {action} [<path>, ...] [OPTIONS]",
+        help=_help,
+        formatter_class=_SubcommandHelpFormatter
+    )
+    _action_parser.add_argument(
+        "paths",
+        nargs="*",
+        default=".",
+        help="list of files or directories [default: .]"
+    )
+    _action_parser.add_argument(
+        "--chain",
+        nargs="*",
+        metavar="<dir/file name>,",
+        help="combines on the given files or directories for analysis"
+    )
+    _action_parser.add_argument(
+        "--chain-all",
+        action="store_true",
+        help="combines all files or directories for analysis"
+    )
+    _action_parser.add_argument(
+        "--exclude",
+        nargs="*",
+        metavar="<dir/file name>,",
+        help="excludes on the given files or directories",
+    )
+
+    return _action_parser
+
+
 parser = argparse.ArgumentParser(
     prog="pyfactoring",
     description="Pyfactoring: A linter that will help you find and refactor copy-paste",
-    usage="%(prog)s [OPTIONS] <ACTION> [<path>, ...]",
+    usage="%(prog)s [OPTIONS] <ACTION> [<path>, ...] [OPTIONS]",
     formatter_class=_SubcommandHelpFormatter,
 )
 
 # === ACTION === #
-action_parser = parser.add_subparsers(title="actions", dest="action")
-
-check_parser = action_parser.add_parser(
-    name="check",
-    prog="pyfactoring",
-    usage="%(prog)s [OPTIONS] check [<path>, ...] [OPTIONS]",
-    help="run check on the given files or directories",
-    formatter_class=_SubcommandHelpFormatter,
-)
-check_parser.add_argument(
-    "paths",
-    nargs="*",
-    default=".",
-    help="list of files or directories [default: .]"
-)
-check_parser.add_argument(
-    "--exclude-dirs",
-    nargs="*",
-    metavar="<dir name>,",
-    help="excludes added directories",
-)
-check_parser.add_argument(
-    "--exclude-files",
-    nargs="*",
-    metavar="<file name>,",
-    help="excludes added files"
-)
-
-format_parser = action_parser.add_parser(
-    name="format",
-    prog="pyfactoring",
-    usage="%(prog)s [OPTIONS] format [<path>, ...] [OPTIONS]",
-    help="run format on the given files or directories",
-    formatter_class = _SubcommandHelpFormatter,
-)
-format_parser.add_argument(
-    "paths",
-    nargs="*",
-    default=".",
-    help="list of files or directories [default: .]"
-)
-format_parser.add_argument(
-    "--exclude-dirs",
-    nargs="*",
-    metavar="<dir name>,",
-    help="excludes added directories"
-)
-format_parser.add_argument(
-    "--exclude-files",
-    nargs="*",
-    metavar="<file name>,",
-    help="excludes added files"
-)
+action_subparser = parser.add_subparsers(title="actions", dest="action")
+check_parser = _create_base_action_parser(action_subparser, "check", True)
+format_parser = _create_base_action_parser(action_subparser, "format")
 
 # === COMMON OPTIONS === #
 general_options = parser.add_argument_group("general options")

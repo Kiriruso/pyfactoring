@@ -8,6 +8,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from pyfactoring.arguments import args
+from pyfactoring.exceptions import OptionsConflictError
 
 
 class CommonSettings(BaseSettings):
@@ -16,9 +17,9 @@ class CommonSettings(BaseSettings):
 
     color: Annotated[bool, Field(default=False)]
     diff: Annotated[bool, Field(default=False)]
-    exclude_dirs: Annotated[list[str], Field(default_factory=list)]
-    exclude_files: Annotated[list[str], Field(default_factory=list)]
     workers: Annotated[int, Field(default=1)]
+    exclude: Annotated[list[str], Field(default_factory=list)]
+    chain: Annotated[list[str], Field(default=list)]
 
     model_config = SettingsConfigDict(extra="ignore")
 
@@ -39,7 +40,7 @@ class PyclonesSettings(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
 
-def load_config():
+def _load_config():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(current_dir)
     cfg_file = os.path.join(parent_dir, "pyproject.toml")
@@ -58,19 +59,23 @@ def load_config():
     }
 
 
-def assign_arguments(config: dict):
+def _assign_arguments(config: dict):
     if args.action:
         config["common"]["action"] = args.action
-        if isinstance(args.paths, str):
-            config["common"]["paths"] = args.paths.split()
-        else:
-            config["common"]["paths"] = args.paths
+        config["common"]["paths"] = args.paths.split() if isinstance(args.paths, str) else args.paths
 
-        if args.exclude_dirs:
-            config["common"]["exclude_dirs"] = args.exclude_dirs
+        if args.chain_all and args.chain:
+            raise OptionsConflictError(
+                f"The passed options are incompatible: '--chain-all' and '--chain'"
+            )
 
-        if args.exclude_files:
-            config["common"]["exclude_files"] = args.exclude_files
+        if args.chain_all:
+            config["common"]["chain"] = config["common"]["paths"]
+        elif args.chain:
+            config["common"]["chain"] = args.chain
+
+        if args.exclude:
+            config["common"]["exclude"] = args.exclude
 
     if args.color:
         config["common"]["color"] = True
@@ -100,8 +105,8 @@ def assign_arguments(config: dict):
         config["pyclones"]["length"] = args.pc_length
 
 
-_config = load_config()
-assign_arguments(_config)
+_config = _load_config()
+_assign_arguments(_config)
 
 common_settings: CommonSettings = CommonSettings(**_config.get("common"))
 pydioms_settings: PydiomsSettings = PydiomsSettings(**_config.get("pydioms"))

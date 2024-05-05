@@ -22,8 +22,9 @@ action = "check"
 diff = true
 color = true
 workers = 1
-exclude_dirs = []
-exclude_files = []
+chain = []
+chain_all = true
+exclude = []
 
 [tool.pyfactoring.pydioms]
 count = 5
