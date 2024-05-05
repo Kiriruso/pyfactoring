@@ -1,10 +1,11 @@
+import ast
 from dataclasses import dataclass, field
 
 from pyfactoring.utils.pydioms.prefixtree import PrefixNode, SubtreeVariant
 
 
 @dataclass
-class Idiom:
+class PossibleIdiom:
     ids: set[int] = field(default_factory=set, repr=False)
     total_trees: int = field(default=0)
     efficiency: float = field(default=None)
@@ -19,12 +20,12 @@ class Idiom:
 
 @dataclass
 class IdiomState:
-    idiom: Idiom
+    possible_idiom: PossibleIdiom
     edges: list[PrefixNode] = field(repr=False)
     is_idiom: bool = field(default=False, init=False)
 
     def __post_init__(self):
-        self._ids = iter(self.idiom.ids)
+        self._ids = iter(self.possible_idiom.ids)
 
     def __next__(self) -> int:
         try:
@@ -34,35 +35,35 @@ class IdiomState:
 
     @property
     def ids(self) -> set[int]:
-        return self.idiom.ids
+        return self.possible_idiom.ids
 
     @property
     def idiom_length(self) -> int:
-        return self.idiom.length
+        return self.possible_idiom.length
 
     @property
     def efficiency(self) -> float:
-        return self.idiom.efficiency
+        return self.possible_idiom.efficiency
 
     @property
     def information(self) -> float:
-        return self.idiom.information
+        return self.possible_idiom.information
 
     @property
     def total_trees(self) -> int:
-        return self.idiom.total_trees
+        return self.possible_idiom.total_trees
 
     @property
     def total_operands(self) -> int:
-        return self.idiom.total_operands
+        return self.possible_idiom.total_operands
 
     @property
     def total_operators(self) -> int:
-        return self.idiom.total_operators
+        return self.possible_idiom.total_operators
 
 
-@dataclass
-class IdiomInfo:
+@dataclass(eq=False, repr=False)
+class Idiom:
     state: IdiomState
     id: int
     primary_ids: set[int] = field(init=False)
@@ -70,6 +71,27 @@ class IdiomInfo:
     def __post_init__(self):
         self.primary_ids: set[int] = {self.id}
 
+    def __repr__(self):
+        return repr(self.state.possible_idiom)
+
+    def __hash__(self) -> int:
+        return hash(self.id)
+
     @property
     def efficiency(self) -> float:
         return self.state.efficiency
+
+
+@dataclass
+class CodeBlockIdiom:
+    ast_node: ast.AST = field(repr=False)
+
+    file: str
+    lineno: int
+    end_lineno: int
+    colno: int
+    end_colno: int
+
+    @property
+    def link(self) -> str:
+        return f"{self.file}:{self.lineno}:{self.colno}"

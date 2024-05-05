@@ -36,7 +36,10 @@ _DEFAULT_EXCLUDE = (
 )
 
 
-def collect_filepaths(path: str, *, exclude: Collection[str] | None = None) -> list[Path]:
+def collect_filepaths(path: str, *, exclude: Collection[str] = None) -> list[Path]:
+    if exclude is None:
+        exclude = []
+
     if os.path.isfile(path) and path.endswith(".py"):
         return [Path(path)]
     if os.path.isdir(path):
@@ -47,7 +50,7 @@ def collect_filepaths(path: str, *, exclude: Collection[str] | None = None) -> l
     raise FileOrDirNotFoundError(f"Path does not lead to any dirs or file[.txt | .py]: '{path}'")
 
 
-def _collect_from_dir(dirpath: str, exclude: Collection[str] | None) -> list[Path]:
+def _collect_from_dir(dirpath: str, exclude: Collection[str]) -> list[Path]:
     filepaths: list[Path] = []
     for current_path, dirs, files in os.walk(dirpath):
         current_path = Path(current_path)
@@ -56,7 +59,7 @@ def _collect_from_dir(dirpath: str, exclude: Collection[str] | None) -> list[Pat
     return _filter_filepaths(filepaths, exclude)
 
 
-def _collect_from_file(filepath: str, exclude: Collection[str] | None) -> list[Path]:
+def _collect_from_file(filepath: str, exclude: Collection[str]) -> list[Path]:
     relative_path = Path(filepath).parent
     with open(filepath, "r") as f:
         filepaths = [
@@ -67,7 +70,7 @@ def _collect_from_file(filepath: str, exclude: Collection[str] | None) -> list[P
     return _filter_filepaths(filepaths, exclude)
 
 
-def _filter_filepaths(filepaths: Collection[Path], exclude: Collection[str] | None) -> list[Path]:
+def _filter_filepaths(filepaths: Collection[Path], exclude: Collection[str]) -> list[Path]:
     global _DIR_PATTERN, _FILE_PATTERN, _DEFAULT_EXCLUDE
 
     patterns: list[str] = []

@@ -1,6 +1,7 @@
 __all__ = ["make_prefix_trees", "SubtreeVariant", "PrefixTree", "PrefixNode", "PrefixLeaf"]
 
 import ast
+import pathlib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
@@ -10,13 +11,14 @@ from pyfactoring.utils.pydioms.ast_inspect import (
     make_inspected_tree,
 )
 from pyfactoring.utils.pydioms.ast_types import CountingType
+from pyfactoring.utils.extracting import extract_ast
 
 
-def make_prefix_trees(trees: Iterable[ASTInspectedNode | ast.AST]) -> list["PrefixTree"]:
+def make_prefix_trees(filepaths: Iterable[str | pathlib.Path]) -> list["PrefixTree"]:
     prefix_trees = []
-    for tree in trees:
+    for filepath in filepaths:
         prefix_tree = PrefixTree()
-        prefix_tree.add_tree(tree)
+        prefix_tree.add_tree(filepath)
         prefix_trees.append(prefix_tree)
     return prefix_trees
 
@@ -112,7 +114,7 @@ class PrefixNode:
 
 @dataclass
 class PrefixTree:
-    trees: Iterable[ASTInspectedNode | ast.AST] = field(default_factory=list)
+    filepaths: Iterable[str | pathlib.Path] = field(default_factory=list)
 
     total_operands: int = field(default=0, init=False)
     total_operators: int = field(default=0, init=False)
@@ -124,30 +126,20 @@ class PrefixTree:
     inspected_trees: dict[int, ASTInspectedNode] = field(default_factory=dict, init=False, repr=False)
 
     def __post_init__(self):
-        for tree in self.trees:
-            self.add_tree(tree)
+        for filepath in self.filepaths:
+            self.add_tree(filepath)
 
-    def add_tree(self, root: ASTInspectedNode | ast.AST):
-        if isinstance(root, ASTInspectedNode):
-            self.add_inspected_tree(root)
-            return
-
-        if isinstance(root, ast.AST):
-            self.add_ast_obj(root)
-            return
-
-        raise TypeError(
-            f"Получен неподдерживаемый объект: {root}. "
-            f"Ожидаемый тип: ASTInspectedNode | AST."
-        )
+    def add_tree(self, filepath: str | pathlib.Path):
+        module = extract_ast(filepath)
+        self.add_ast_obj(module, str(filepath))
 
     def add_inspected_tree(self, root: ASTInspectedNode):
         self.total_operands += root.total_operands
         self.total_operators += root.total_operators
         self._add_tree(root)
 
-    def add_ast_obj(self, root: ast.AST):
-        inspected_tree = make_inspected_tree(root)
+    def add_ast_obj(self, root: ast.AST, filepath: str):
+        inspected_tree = make_inspected_tree(root, filepath)
         self.add_inspected_tree(inspected_tree)
 
     def _add_name(self, operand_name: str):

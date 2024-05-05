@@ -28,6 +28,7 @@ class ASTInspectedLeaf:
     total_operands: int = field(default=0, init=False, repr=False)
     total_operators: int = field(default=0, init=False, repr=False)
     ast_node: ast.AST = field(default=None, init=False, repr=False)
+    file: str = field(default=None, init=False, repr=False)
 
     def __post_init__(self):
         self.total_operands = int(self.count_as == CountingType.OPERAND)
@@ -105,7 +106,7 @@ def source_from_inspected_tree(
     yield from source_from_(root)
 
 
-def make_inspected_tree(root) -> ASTInspectedNode | ASTInspectedLeaf:
+def make_inspected_tree(root, filepath) -> ASTInspectedNode | ASTInspectedLeaf:
     # todo: написать назначение
     """
 
@@ -121,7 +122,7 @@ def make_inspected_tree(root) -> ASTInspectedNode | ASTInspectedLeaf:
         return ASTInspectedLeaf(leaf_name, CountingType.OPERAND)
 
     if type(root) in AST_SPECIFIC_NODES:
-        return _make_specific(root)
+        return _make_specific(root, filepath)
 
     ast_name, ast_body = _info_from_ast(root)
     ast_info = AST_NODES_INFO.get(ast_name)
@@ -133,6 +134,7 @@ def make_inspected_tree(root) -> ASTInspectedNode | ASTInspectedLeaf:
     inspected_node = ASTInspectedNode(ast_info.name, ast_info.count_as)
     inspected_node.realize_subtree = ast_info.name in AST_REALIZE_SUBTREE_NODES
     inspected_node.ast_node = root
+    inspected_node.file = filepath
 
     for ast_child_name in ast_info.children_names:
         ast_child_children = ast_body.get(ast_child_name)
@@ -143,7 +145,7 @@ def make_inspected_tree(root) -> ASTInspectedNode | ASTInspectedLeaf:
 
             inspected_list = []
             for ast_child_child in ast_child_children:
-                inspected_child_child = make_inspected_tree(ast_child_child)
+                inspected_child_child = make_inspected_tree(ast_child_child, filepath)
                 inspected_child_child.realize_subtree |= child_realize_subtree
                 inspected_child_child.ast_node = ast_child_child
 
@@ -160,7 +162,7 @@ def make_inspected_tree(root) -> ASTInspectedNode | ASTInspectedLeaf:
             inspected_node.append(ASTInspectedLeaf())
             continue
 
-        inspected_node.append(make_inspected_tree(ast_child_children))
+        inspected_node.append(make_inspected_tree(ast_child_children, filepath))
 
     return inspected_node
 
@@ -189,21 +191,21 @@ def _make_list(inspected_nodes: list[ASTInspectedNode]) -> ASTInspectedNode:
     return sublist
 
 
-def _make_specific(root) -> ASTInspectedNode:
+def _make_specific(root, filepath) -> ASTInspectedNode:
     match type(root):
         case ast.Dict | ast.Compare:
-            return _make_dict_or_compare(root)
+            return _make_dict_or_compare(root, filepath)
         case ast.Global | ast.Nonlocal:
             return _make_global_or_nonlocal(root)
         case ast.Constant:
             return _make_constant(root)
         case ast.comprehension:
-            return _make_comprehension(root)
+            return _make_comprehension(root, filepath)
         case ast.arguments:
-            return _make_arguments(root)
+            return _make_arguments(root, filepath)
 
 
-def _make_dict_or_compare(root: ast.Dict | ast.Compare) -> ASTInspectedNode:
+def _make_dict_or_compare(root: ast.Dict | ast.Compare, filepath: str) -> ASTInspectedNode:
     is_dict = isinstance(root, ast.Dict)
     node_name, pair_name = ("Dict", "DICT_PAIR") if is_dict else ("Compare", "COMP_PAIR")
     keys_or_ops, values_or_comparators = (
@@ -213,13 +215,13 @@ def _make_dict_or_compare(root: ast.Dict | ast.Compare) -> ASTInspectedNode:
 
     inspected = ASTInspectedNode(node_name, count_as)
     if not is_dict:
-        inspected.append(make_inspected_tree(root.left))
+        inspected.append(make_inspected_tree(root.left, filepath))
 
     inspected_pairs = []
     for key, value in zip(keys_or_ops, values_or_comparators):
         inspected_pair = ASTInspectedNode(pair_name)
-        inspected_pair.append(make_inspected_tree(key))
-        inspected_pair.append(make_inspected_tree(value))
+        inspected_pair.append(make_inspected_tree(key, filepath))
+        inspected_pair.append(make_inspected_tree(value, filepath))
         inspected_pairs.append(inspected_pair)
 
     inspected.append(_make_list(inspected_pairs))
@@ -265,37 +267,37 @@ def _make_constant(root: ast.Constant) -> ASTInspectedNode:
     return inspected
 
 
-def _make_comprehension(root: ast.comprehension) -> ASTInspectedNode:
+def _make_comprehension(root: ast.comprehension, filepath: str) -> ASTInspectedNode:
     name = "AsyncComprehension" if root.is_async else "comprehension"
     inspected = ASTInspectedNode(name, CountingType.OPERATOR)
-    inspected.append(make_inspected_tree(root.target))
-    inspected.append(make_inspected_tree(root.iter))
+    inspected.append(make_inspected_tree(root.target, filepath))
+    inspected.append(make_inspected_tree(root.iter, filepath))
 
     inspected_ifs = ASTInspectedNode()
     if len(root.ifs) == 1:
-        inspected_ifs = make_inspected_tree(root.ifs[0])
+        inspected_ifs = make_inspected_tree(root.ifs[0], filepath)
     inspected.append(inspected_ifs)
 
     return inspected
 
 
 def _make_args(
-    posonly: list[ast.arg], other: list[ast.arg], defaults: list[ast.expr]
+    posonly: list[ast.arg], other: list[ast.arg], defaults: list[ast.expr], filepath: str
 ) -> tuple[list[ASTInspectedNode], list[ASTInspectedNode]]:
     it = len(defaults) - len(posonly) - len(other)
 
     def internal_make(arguments: list[ast.arg]) -> list[ASTInspectedNode]:
-        nonlocal it, defaults
+        nonlocal it, defaults, filepath
         inspected_args = []
         for arg in arguments:
             inspected_arg = ASTInspectedNode("arg")
-            inspected_arg.append(make_inspected_tree(arg.arg))
-            inspected_arg.append(make_inspected_tree(arg.annotation))
+            inspected_arg.append(make_inspected_tree(arg.arg, filepath))
+            inspected_arg.append(make_inspected_tree(arg.annotation, filepath))
 
             if it < 0:
                 inspected_arg.append(ASTInspectedNode())
             else:
-                inspected_arg.append(make_inspected_tree(defaults[it]))
+                inspected_arg.append(make_inspected_tree(defaults[it], filepath))
 
             inspected_args.append(inspected_arg)
             it += 1
@@ -304,30 +306,32 @@ def _make_args(
     return internal_make(posonly), internal_make(other)
 
 
-def _make_kwargs(vararg: ast.arg, kwarg: ast.arg) -> tuple[ASTInspectedNode, ASTInspectedNode]:
+def _make_kwargs(
+        vararg: ast.arg, kwarg: ast.arg, filepath: str
+) -> tuple[ASTInspectedNode, ASTInspectedNode]:
     def internal_make(arg: ast.arg) -> ASTInspectedNode:
         if arg is None:
             return ASTInspectedNode()
         inspected_arg = ASTInspectedNode("sarg")
-        inspected_arg.append(make_inspected_tree(arg.arg))
-        inspected_arg.append(make_inspected_tree(arg.annotation))
+        inspected_arg.append(make_inspected_tree(arg.arg, filepath))
+        inspected_arg.append(make_inspected_tree(arg.annotation, filepath))
         return inspected_arg
 
     return internal_make(vararg), internal_make(kwarg)
 
 
-def _make_arguments(root: ast.arguments) -> ASTInspectedNode:
+def _make_arguments(root: ast.arguments, filepath: str) -> ASTInspectedNode:
     inspected_arguments = ASTInspectedNode("arguments")
 
-    posonlyargs, args = _make_args(root.posonlyargs, root.args, root.defaults)
+    posonlyargs, args = _make_args(root.posonlyargs, root.args, root.defaults, filepath)
     kwonlyargs = []
     for i, kwonlyarg in enumerate(root.kwonlyargs):
         inspected_arg = ASTInspectedNode("arg")
-        inspected_arg.append(make_inspected_tree(kwonlyarg.arg))
-        inspected_arg.append(make_inspected_tree(kwonlyarg.annotation))
-        inspected_arg.append(make_inspected_tree(root.kw_defaults[i]))
+        inspected_arg.append(make_inspected_tree(kwonlyarg.arg, filepath))
+        inspected_arg.append(make_inspected_tree(kwonlyarg.annotation, filepath))
+        inspected_arg.append(make_inspected_tree(root.kw_defaults[i], filepath))
         kwonlyargs.append(inspected_arg)
-    vararg, kwarg = _make_kwargs(root.vararg, root.kwarg)
+    vararg, kwarg = _make_kwargs(root.vararg, root.kwarg, filepath)
 
     inspected_arguments.append(_make_list(posonlyargs))
     inspected_arguments.append(_make_list(args))
