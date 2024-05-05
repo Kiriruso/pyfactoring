@@ -85,7 +85,7 @@ general_options.add_argument(
 # === SPECIFIC OPTIONS === #
 pydioms_group = parser.add_argument_group("pydioms options")
 pydioms_group.add_argument(
-    "--verbose",
+    "--pd-verbose",
     action="store_true",
     help="displays additional information"
 )
@@ -104,6 +104,11 @@ pydioms_group.add_argument(
 
 pyclones_group = parser.add_argument_group("pyclones options")
 pyclones_group.add_argument(
+    "--template-view",
+    action="store_true",
+    help="display template for clone set"
+)
+pyclones_group.add_argument(
     "--template-mode",
     choices=["code", "tree"],
     metavar="<mode>",
@@ -119,7 +124,7 @@ pyclones_group.add_argument(
     "--pc-length",
     type=int,
     metavar="<length>",
-    help="minimum code fragment length [default: 3]",
+    help="minimum code fragment length [default: 5]",
 )
 
 args = parser.parse_args()

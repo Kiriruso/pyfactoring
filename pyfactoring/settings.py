@@ -33,9 +33,10 @@ class PydiomsSettings(BaseSettings):
 
 
 class PyclonesSettings(BaseSettings):
-    count: Annotated[int, Field(ge=0, default=1)]
+    count: Annotated[int, Field(ge=0, default=2)]
     length: Annotated[int, Field(gt=0, default=5)]
     template_mode: Literal["tree", "code"] | None = None
+    template_view: bool = False
 
     model_config = SettingsConfigDict(extra="ignore")
 
@@ -86,8 +87,8 @@ def _assign_arguments(config: dict):
     if args.workers:
         config["common"]["workers"] = args.workers
 
-    if args.verbose:
-        config["pydioms"]["verbose"] = args.verbose
+    if args.pd_verbose:
+        config["pydioms"]["verbose"] = args.pd_verbose
 
     if args.pd_count:
         config["pydioms"]["count"] = args.pd_count
@@ -97,6 +98,9 @@ def _assign_arguments(config: dict):
 
     if args.template_mode:
         config["pyclones"]["template_mode"] = args.template_mode
+
+    if args.template_view:
+        config["pyclones"]["template_view"] = args.template_view
 
     if args.pc_count:
         config["pyclones"]["count"] = args.pc_count

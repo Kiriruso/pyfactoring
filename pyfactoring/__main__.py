@@ -6,29 +6,15 @@ from pyfactoring import (
     extract_ast, extract_idioms,
     ast_inspect, prefixtree
 )
-
-from pyfactoring.settings import common_settings, pydioms_settings, pyclones_settings
+from pyfactoring.core.check import check
 
 
 def idiom_check():
     sys.setrecursionlimit(sys.getrecursionlimit() * 100)
 
     target = input("Path to dir or file[.txt | .py]: ")
-    exclude_dirs = []
-    exclude_files = []
 
-    if not target.endswith(".py"):
-        exclude_dirs = input("Exclude dirs or skip: ")
-        if exclude_dirs.lower() not in ("skip", "s", ""):
-            exclude_dirs = exclude_dirs.split()
-
-        exclude_files = input("Exclude files or skip: ")
-        if exclude_files.lower() not in ("skip", "s", ""):
-            exclude_files = exclude_files.split()
-
-    print()
-
-    filepaths = collect_filepaths(target, exclude_dirs=exclude_dirs, exclude_files=exclude_files)
+    filepaths = collect_filepaths(target)
     modules = [extract_ast(filepath) for filepath in filepaths]
 
     prefix_trees = prefixtree.make_prefix_trees(modules)
@@ -58,6 +44,4 @@ def idiom_check():
 
 
 if __name__ == '__main__':
-    print(common_settings)
-    print(pydioms_settings)
-    print(pyclones_settings)
+    check()

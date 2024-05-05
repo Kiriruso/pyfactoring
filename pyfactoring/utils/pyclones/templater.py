@@ -25,7 +25,7 @@ class Templater(ast.NodeTransformer):
             else:
                 self._scope = Scope()
 
-    def find_all_imports(self, module: ast.Module):
+    def update_imports(self, module: ast.Module):
         self._scope.clear_imports()
         imports = self._find_all_imports(module)
         self._scope.update_imports(imports)

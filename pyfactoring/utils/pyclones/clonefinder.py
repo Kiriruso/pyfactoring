@@ -1,6 +1,7 @@
 import ast
 import copy
 import pathlib
+from collections import defaultdict
 from collections.abc import Collection
 from dataclasses import dataclass, field
 
@@ -13,10 +14,15 @@ from pyfactoring.utils.extracting import extract_ast
 @dataclass(frozen=True)
 class CodeBlockClone:
     source: str = field(repr=False)
+    file: str
     lineno: int
     end_lineno: int
     colno: int
     end_colno: int
+
+    @property
+    def link(self) -> str:
+        return f"{self.file}:{self.lineno}:{self.colno}"
 
 
 @dataclass
@@ -42,14 +48,14 @@ class CloneFinder:
         else:
             self.allowed_nodes: tuple[str] = tuple(self.allowed_nodes)
 
-    def find_all(self, root: ast.AST) -> dict[str, list[CodeBlockClone]]:
-        clones: dict[str, list[CodeBlockClone]] = {}
+    def find_all(
+            self, filepath: str | pathlib.Path, *, unfiltered: bool = False
+    ) -> dict[str, list[CodeBlockClone]]:
+        clones: dict[str, list[CodeBlockClone]] = defaultdict(list)
+        module = extract_ast(filepath)
+        self.templater.update_imports(module)
 
-        for node in ast.walk(root):
-            if isinstance(node, ast.Module):
-                self.templater.find_all_imports(node)
-                continue
-
+        for node in ast.walk(module):
             if not self._is_allowed_node(node):
                 continue
 
@@ -58,6 +64,7 @@ class CloneFinder:
 
             clone = CodeBlockClone(
                 self._get_source(node),
+                str(filepath),
                 node.lineno, node.end_lineno,
                 node.col_offset, node.end_col_offset
             )
@@ -66,9 +73,28 @@ class CloneFinder:
             template = self._get_source(self.templater.visit(to_template))
             del to_template
 
-            if template not in clones:
-                clones.setdefault(template, [])
             clones[template].append(clone)
+
+        if unfiltered:
+            return clones
+
+        return {
+            t: cs
+            for t, cs in clones.items()
+            if len(cs) >= pyclones_settings.count
+        }
+
+    def chained_find_all(
+            self, filepaths: Collection[str | pathlib.Path]
+    ) -> dict[str, list[CodeBlockClone]]:
+        clones: dict[str, list[CodeBlockClone]] = {}
+        for filepath in filepaths:
+            current_clones = self.find_all(filepath, unfiltered=True)
+            for template, blocks in current_clones.items():
+                if template not in clones.keys():
+                    clones[template] = blocks
+                else:
+                    clones[template].extend(blocks)
 
         return {
             t: cs
@@ -91,27 +117,3 @@ class CloneFinder:
                     f"Template extraction mode is not specified or is incorrect: "
                     f"{pyclones_settings.template_mode}"
                 )
-
-
-def main():
-    target = pathlib.Path(__file__).parents[3] / "test" / "common" / "test_all.py"
-    module = extract_ast(target)
-    finder = CloneFinder()
-
-    for template, clones in finder.find_all(module).items():
-        print(template, end='\n\n')
-        for clone in clones:
-            print(clone.source, end='\n\n')
-        print()
-
-
-if __name__ == "__main__":
-    main()
-
-# Задачи:
-# 1. Реализовать алгоритм упрощения блока кода, для его анализа и поиска клонов всех типов
-    # 1.1. Добавить настройку для поиска всех типов клонов или только конкретных
-# 2. Определить параметры фильтрации
-# 3. Создать алгоритм фильтрации по заданным параметрам
-# 4. Реализовать алгоритм фильтрации входящих друг в друга блоков кода
-# 5. Поиск исходных блоков, для их дальнейшей замены
