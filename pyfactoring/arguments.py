@@ -65,11 +65,6 @@ format_parser = _create_base_action_parser(action_subparser, "format")
 # === COMMON OPTIONS === #
 general_options = parser.add_argument_group("general options")
 general_options.add_argument(
-    "--color",
-    action="store_true",
-    help="displays colors when outputting information"
-)
-general_options.add_argument(
     "--diff",
     action="store_true",
     help="displays the differences between the changes made and the source"

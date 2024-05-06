@@ -15,7 +15,6 @@ class CommonSettings(BaseSettings):
     action: Annotated[Literal["check", "format"], Field(default="check")]
     paths: Annotated[list[str], Field(default=["."])]
 
-    color: Annotated[bool, Field(default=False)]
     diff: Annotated[bool, Field(default=False)]
     workers: Annotated[int, Field(default=1)]
     exclude: Annotated[list[str], Field(default_factory=list)]

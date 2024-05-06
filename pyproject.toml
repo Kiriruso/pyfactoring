@@ -20,7 +20,6 @@ indent-style = "space"
 [tool.pyfactoring]
 action = "check"
 diff = true
-color = true
 workers = 1
 paths = ["."]
 chain = []
