@@ -5,13 +5,13 @@ import pathlib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
+from pyfactoring.utils import extract
 from pyfactoring.utils.pydioms.ast_inspect import (
     ASTInspectedLeaf,
     ASTInspectedNode,
     make_inspected_tree,
 )
 from pyfactoring.utils.pydioms.ast_types import CountingType
-from pyfactoring.utils.extracting import extract_ast
 
 
 def make_prefix_trees(filepaths: Iterable[str | pathlib.Path]) -> list["PrefixTree"]:
@@ -58,7 +58,7 @@ class PrefixLeaf:
         elif name_ is not None:
             ids = self.value_to_ids.get(name_)
         else:
-            raise ValueError(f"Ожидалось значение: id_ или name_. Получено: {id_=}, {name_=}")
+            raise ValueError(f"Expected value: id_ or name_. Received: {id_=}, {name_=}")
         return None, ids, CountingType.OPERAND
 
 
@@ -92,7 +92,7 @@ class PrefixNode:
         elif name_ is not None:
             variant = self.variant_by_name(name_)
         else:
-            raise ValueError(f"Ожидалось значение: id_ или name_. Получено: {id_=}, {name_=}")
+            raise ValueError(f"Expected value: id_ or name_. Received: {id_=}, {name_=}")
         return variant, variant.ids, variant.count_as
 
     def variant_by_id(self, id_: int) -> SubtreeVariant:
@@ -130,7 +130,7 @@ class PrefixTree:
             self.add_tree(filepath)
 
     def add_tree(self, filepath: str | pathlib.Path):
-        module = extract_ast(filepath)
+        module = extract.module(filepath)
         self.add_ast_obj(module, str(filepath))
 
     def add_inspected_tree(self, root: ASTInspectedNode):

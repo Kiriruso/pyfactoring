@@ -1,0 +1,2 @@
+def format():
+    raise NotImplemented

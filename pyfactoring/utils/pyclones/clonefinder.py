@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from pyfactoring.exceptions import UndefinedModeError
 from pyfactoring.settings import pyclones_settings
 from pyfactoring.utils.pyclones.templater import Templater
-from pyfactoring.utils.extracting import extract_ast
+from pyfactoring.utils import extract
 
 
 @dataclass(frozen=True)
@@ -52,7 +52,7 @@ class CloneFinder:
             self, filepath: str | pathlib.Path, *, unfiltered: bool = False
     ) -> dict[str, list[CodeBlockClone]]:
         clones: dict[str, list[CodeBlockClone]] = defaultdict(list)
-        module = extract_ast(filepath)
+        module = extract.module(filepath)
         self.templater.update_imports(module)
 
         for node in ast.walk(module):

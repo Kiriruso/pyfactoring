@@ -1,4 +1,4 @@
-from pyfactoring.core.check import check
+from pyfactoring.core import check, format
 
 
 if __name__ == '__main__':
