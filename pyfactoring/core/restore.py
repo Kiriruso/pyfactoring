@@ -1,2 +1,0 @@
-def restore():
-    raise NotImplemented

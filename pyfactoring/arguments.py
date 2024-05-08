@@ -61,6 +61,18 @@ parser = argparse.ArgumentParser(
 action_subparser = parser.add_subparsers(title="actions", dest="action")
 check_parser = _create_base_action_parser(action_subparser, "check", True)
 format_parser = _create_base_action_parser(action_subparser, "format")
+format_parser.add_argument(
+    "--pack-consts",
+    action="store_true",
+    help="when generating a function, all constants are packed into '*consts'"
+)
+restore_parser = action_subparser.add_parser(
+    name="restore",
+    prog="pyfactoring",
+    usage=f"%(prog)s restore",
+    help="restore previous version of files",
+    formatter_class=_SubcommandHelpFormatter
+)
 
 # === COMMON OPTIONS === #
 general_options = parser.add_argument_group("general options")

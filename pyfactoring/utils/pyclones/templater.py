@@ -6,11 +6,11 @@ from pyfactoring.utils.pyclones.scope import Scope
 
 
 class Templater(ast.NodeTransformer):
-    __slots__ = ["_scope", "_scope_stack"]
-
     def __init__(self):
         self._scope: Scope = Scope(global_=True)
         self._scope_stack: list[Scope] = []
+        self._unique_variables: list[str] = []
+        self._unique_consts: list[str] = []
 
     @contextlib.contextmanager
     def scope(self):
@@ -25,7 +25,17 @@ class Templater(ast.NodeTransformer):
             else:
                 self._scope = Scope()
 
-    def update_imports(self, module: ast.Module):
+    def pop_unique_operands(self) -> tuple[list[str], list[str]]:
+        uv, uc = self._unique_variables.copy(), self._unique_consts.copy()
+        self._unique_variables.clear()
+        self._unique_consts.clear()
+        return uv, uc
+
+    def update_globals(self, module: ast.Module):
+        self._scope.clear_global_variables()
+        variables = self._find_all_global_variables(module)
+        self._scope.update_global_variables(variables)
+
         self._scope.clear_imports()
         imports = self._find_all_imports(module)
         self._scope.update_imports(imports)
@@ -366,12 +376,18 @@ class Templater(ast.NodeTransformer):
 
         match type(node):
             case ast.Name:
-                node.id = self._scope.get_name(node.id)
+                name = self._scope.get_name(node.id)
+                if "var" in name:
+                    if node.id not in self._unique_variables:
+                        self._unique_variables.append(node.id)
+                node.id = name
             case ast.Starred:
                 node.value = self._templatize(node.value)
             case ast.arg:
                 node.arg = self._scope.get_name(node.arg)
             case ast.Constant:
+                if str(node.value) not in self._unique_consts:
+                    self._unique_consts.append(str(node.value))
                 node.value = self._scope.get_const(node.value)
             case ast.Tuple | ast.List | ast.Set:
                 node.elts = self.visit_collection(node.elts)
@@ -405,9 +421,27 @@ class Templater(ast.NodeTransformer):
         return node
 
     @staticmethod
-    def _find_all_imports(node: ast.AST) -> list[str]:
+    def _find_all_global_variables(module: ast.Module) -> set[str]:
+        global_variables: set[str] = set()
+        for node in ast.iter_child_nodes(module):
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        global_variables.add(target.id)
+                    elif isinstance(target, ast.Tuple):
+                        for elt in target.elts:
+                            if isinstance(elt, ast.Name):
+                                global_variables.add(elt.id)
+                            elif isinstance(elt, ast.Starred) and isinstance(elt.value, ast.Name):
+                                global_variables.add(elt.value.id)
+            if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                global_variables.add(node.target.id)
+        return global_variables
+
+    @staticmethod
+    def _find_all_imports(module: ast.Module) -> list[str]:
         imports: list[str] = []
-        for node in ast.walk(node):
+        for node in ast.walk(module):
             if isinstance(node, ast.alias):
                 imports.append(node.asname if node.asname else node.name)
         return imports

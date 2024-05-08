@@ -1,6 +1,4 @@
 class Scope:
-    __slots__ = ["is_local", "is_global", "_variables", "_constants", "_imports", "_locals"]
-
     COMMON_KEYWORDS = ("self", "cls", "_")
 
     def __init__(self, outer: "Scope" = None, *, global_: bool = False):
@@ -9,8 +7,10 @@ class Scope:
 
         self._variables: dict[str, str] = {}
         self._constants: dict[str, str] = {}
-        self._imports: set[str] = set()
         self._locals: dict[str, str] = {}
+
+        self._imports: set[str] = set()
+        self._global_variables: set[str] = set()
 
         if outer:
             self.is_local = True and not outer.is_global
@@ -18,6 +18,7 @@ class Scope:
             self._variables = {name: template for name, template in outer._variables.items()}
             self._constants = outer._constants if not outer.is_global else {}
             self._imports = outer._imports
+            self._global_variables = outer._global_variables
 
     @property
     def variables(self) -> list[str]:
@@ -35,6 +36,12 @@ class Scope:
     def locals(self) -> list[str]:
         return self._locals.keys()
 
+    def update_global_variables(self, variables: set[str]):
+        self._global_variables.update(variables)
+
+    def clear_global_variables(self):
+        self._global_variables.clear()
+
     def update_imports(self, imports: list[str]):
         self._imports.update(imports)
 
@@ -51,7 +58,12 @@ class Scope:
         if id_ in self._variables.values():
             return id_
 
-        if not self.is_global and self.is_local and id_ not in self._variables.keys():
+        if (
+            not self.is_global
+            and self.is_local
+            and id_ not in self._variables.keys()
+            and id_ not in self._global_variables
+        ):
             if id_ not in self._locals:
                 self._locals[id_] = f"__local_{len(self._locals)}__"
             return self._locals[id_]

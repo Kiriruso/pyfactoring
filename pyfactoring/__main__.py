@@ -1,14 +1,12 @@
-from pyfactoring.core import check, format, restore
+from pyfactoring.core import action_check, action_format, action_restore
 from pyfactoring.settings import common_settings
 
 
 if __name__ == '__main__':
     match common_settings.action:
         case "check":
-            check()
+            action_check()
         case "format":
-            format()
+            action_format()
         case "restore":
-            restore()
-        case _:
-            print("Invalid action")
+            action_restore()

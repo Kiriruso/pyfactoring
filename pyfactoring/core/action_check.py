@@ -7,18 +7,19 @@ from pyfactoring.utils.path import separate_filepaths
 from pyfactoring.settings import common_settings, pyclones_settings
 
 
-def display_analysis(title: str, data: list | dict, data_type: str):
+def display_analysis(title: str, data: list | dict, *, is_idiom: bool = False):
     if not data:
         return
 
     title = f" {Fore.LIGHTCYAN_EX}{title}{Style.RESET_ALL} "
+    data_type = "idiom" if is_idiom else "clone"
     terminal_size = shutil.get_terminal_size().columns
     side_line = '=' * ((terminal_size - len(title)) // 2)
     full_line = '-' * terminal_size
     print(f"{side_line}{title}{side_line}")
 
     def _print(_templates: dict):
-        nonlocal terminal_size, full_line
+        nonlocal terminal_size, full_line, data_type
 
         for template, blocks in _templates.items():
             total_lines = 0
@@ -60,14 +61,14 @@ def display_analysis(title: str, data: list | dict, data_type: str):
         _print(data)
 
 
-def check():
-    paths = separate_filepaths(
+def action_check():
+    single, chained = separate_filepaths(
         common_settings.paths, common_settings.chain, exclude=common_settings.exclude
     )
-    sc, cc = analysis.clone(*paths)
-    si, ci = analysis.idiom(*paths)
+    sc, cc = analysis.clone(single), analysis.clone(chained, is_chained=True)
+    si, ci = analysis.idiom(single), analysis.idiom(chained, is_chained=True)
 
-    display_analysis("FINDING CLONES IN SINGLE FILES", sc, "clone")
-    display_analysis("FINDING CLONES IN CHAINED FILES", cc, "clone")
-    display_analysis("FINDING IDIOMS IN SINGLE FILES", si, "idiom")
-    display_analysis("FINDING IDIOMS IN CHAINED FILES", ci, "idiom")
+    display_analysis("FINDING CLONES IN SINGLE FILES", sc)
+    display_analysis("FINDING CLONES IN CHAINED FILES", cc)
+    display_analysis("FINDING IDIOMS IN SINGLE FILES", si, is_idiom=True)
+    display_analysis("FINDING IDIOMS IN CHAINED FILES", ci, is_idiom=True)

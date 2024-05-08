@@ -1,4 +1,4 @@
-from pyfactoring.core.check import check
-from pyfactoring.core.format import format
-from pyfactoring.core.restore import restore
+from pyfactoring.core.action_check import action_check
+from pyfactoring.core.action_format import action_format
+from pyfactoring.core.action_restore import action_restore
 from pyfactoring.core.analysis import idiom, clone

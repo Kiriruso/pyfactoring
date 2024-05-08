@@ -19,11 +19,12 @@ indent-style = "space"
 
 [tool.pyfactoring]
 action = "check"
-diff = true
+diff = false
 workers = 1
 paths = ["."]
 chain = []
-chain_all = true
+chain_all = false
+pack_consts = false
 exclude = []
 
 [tool.pyfactoring.pydioms]
@@ -32,7 +33,7 @@ length = 10
 verbose = false
 
 [tool.pyfactoring.pyclones]
-count = 0
-length = 1
+count = 2
+length = 5
 template_mode = "code"
 template_view = false

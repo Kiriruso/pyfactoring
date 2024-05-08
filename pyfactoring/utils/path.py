@@ -28,6 +28,7 @@ def _get_venv_name() -> str:
 
 _DEFAULT_EXCLUDE = (
     _get_venv_name(),
+    ".pyfactoring_cache",
     ".idea",
     ".vscode",
     ".git",

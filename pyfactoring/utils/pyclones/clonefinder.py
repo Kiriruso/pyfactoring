@@ -11,14 +11,16 @@ from pyfactoring.utils.pyclones.templater import Templater
 from pyfactoring.utils import extract
 
 
-@dataclass(frozen=True)
+@dataclass
 class CodeBlockClone:
     source: str = field(repr=False)
-    file: str
+    file: pathlib.Path
     lineno: int
     end_lineno: int
     colno: int
     end_colno: int
+    vars: list[str] = field(init=False, default_factory=list)
+    consts: list[str] = field(init=False, default_factory=list)
 
     @property
     def link(self) -> str:
@@ -49,11 +51,11 @@ class CloneFinder:
             self.allowed_nodes: tuple[str] = tuple(self.allowed_nodes)
 
     def find_all(
-            self, filepath: str | pathlib.Path, *, unfiltered: bool = False
+            self, filepath: pathlib.Path, *, unfiltered: bool = False
     ) -> dict[str, list[CodeBlockClone]]:
         clones: dict[str, list[CodeBlockClone]] = defaultdict(list)
         module = extract.module(filepath)
-        self.templater.update_imports(module)
+        self.templater.update_globals(module)
 
         for node in ast.walk(module):
             if not self._is_allowed_node(node):
@@ -64,7 +66,7 @@ class CloneFinder:
 
             clone = CodeBlockClone(
                 self._get_source(node),
-                str(filepath),
+                filepath,
                 node.lineno, node.end_lineno,
                 node.col_offset, node.end_col_offset
             )
@@ -73,6 +75,7 @@ class CloneFinder:
             template = self._get_source(self.templater.visit(to_template))
             del to_template
 
+            clone.vars, clone.consts = self.templater.pop_unique_operands()
             clones[template].append(clone)
 
         if unfiltered:
@@ -85,7 +88,7 @@ class CloneFinder:
         }
 
     def chained_find_all(
-            self, filepaths: Collection[str | pathlib.Path]
+            self, filepaths: Collection[pathlib.Path]
     ) -> dict[str, list[CodeBlockClone]]:
         clones: dict[str, list[CodeBlockClone]] = {}
         for filepath in filepaths:

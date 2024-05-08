@@ -1,5 +1,3 @@
-__all__ = ["common_settings", "pydioms_settings", "pyclones_settings"]
-
 import os
 import tomllib
 from typing import Annotated, Literal
@@ -12,8 +10,9 @@ from pyfactoring.exceptions import OptionsConflictError
 
 
 class CommonSettings(BaseSettings):
-    action: Annotated[Literal["check", "format"], Field(default="check")]
+    action: Annotated[Literal["check", "format", "restore"], Field(default="check")]
     paths: Annotated[list[str], Field(default=["."])]
+    pack_consts: Annotated[bool, Field(default=False)]
 
     diff: Annotated[bool, Field(default=False)]
     workers: Annotated[int, Field(default=1)]
@@ -62,7 +61,18 @@ def _load_config():
 def _assign_arguments(config: dict):
     if args.action:
         config["common"]["action"] = args.action
-        config["common"]["paths"] = args.paths.split() if isinstance(args.paths, str) else args.paths
+
+        if args.action == "restore":
+            return
+
+        if args.action == "format" and args.pack_consts:
+            config["common"]["pack_consts"] = args.pack_consts
+
+        config["common"]["paths"] = (
+            args.paths.split()
+            if isinstance(args.paths, str)
+            else args.paths
+        )
 
         if args.chain_all and args.chain:
             raise OptionsConflictError(
@@ -76,9 +86,6 @@ def _assign_arguments(config: dict):
 
         if args.exclude:
             config["common"]["exclude"] = args.exclude
-
-    if args.color:
-        config["common"]["color"] = True
 
     if args.diff:
         config["common"]["diff"] = True
