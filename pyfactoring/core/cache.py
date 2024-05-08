@@ -53,15 +53,12 @@ def restore():
 
     if recoveries:
         recoveries.pop(0)
-        print(
-            f"{Fore.GREEN}Successfully restored.{Style.RESET_ALL} "
-            f"Remaining: {Fore.LIGHTWHITE_EX}{len(recoveries)}{Style.RESET_ALL}"
-        )
 
         with open(paths_path, "r") as paths_file:
             paths = [pathlib.Path(line.rstrip()) for line in paths_file.readlines()]
 
         for path in paths:
+            print(f"{path}:0: {Fore.GREEN}Restored{Style.RESET_ALL}")
             shutil.copyfile(head_path / path.name, path)
 
         shutil.rmtree(head_path)
