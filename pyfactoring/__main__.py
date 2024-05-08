@@ -1,4 +1,4 @@
-from pyfactoring.core import action_check, action_format, action_restore
+from pyfactoring.core import action_check, action_format, cache
 from pyfactoring.settings import common_settings
 
 
@@ -9,4 +9,4 @@ if __name__ == '__main__':
         case "format":
             action_format()
         case "restore":
-            action_restore()
+            cache.restore()

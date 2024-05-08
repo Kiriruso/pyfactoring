@@ -11,12 +11,12 @@ def display_analysis(title: str, data: list | dict, *, is_idiom: bool = False):
     if not data:
         return
 
-    title = f" {Fore.LIGHTCYAN_EX}{title}{Style.RESET_ALL} "
     data_type = "idiom" if is_idiom else "clone"
     terminal_size = shutil.get_terminal_size().columns
-    side_line = '=' * ((terminal_size - len(title)) // 2)
     full_line = '-' * terminal_size
-    print(f"{side_line}{title}{side_line}")
+
+    title = f" {title} "
+    print(Fore.LIGHTWHITE_EX, title.center(terminal_size, "="), Style.RESET_ALL, sep='')
 
     def _print(_templates: dict):
         nonlocal terminal_size, full_line, data_type
