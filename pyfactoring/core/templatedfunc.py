@@ -1,5 +1,5 @@
-import re
 import itertools
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -49,7 +49,7 @@ def create_function(idx: int, template: str, filepath: Path) -> TemplatedFunc:
     definition = func_template.format(
         name,
         params,
-        body
+        body,
     )
 
     return TemplatedFunc(name, definition, is_async)

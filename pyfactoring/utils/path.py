@@ -1,23 +1,24 @@
-import re
 import os
 import os.path
+import re
 import sys
+from collections.abc import Collection
 from pathlib import Path
 from platform import system
-from collections.abc import Collection
 
 from pyfactoring.exceptions import FileOrDirNotFoundError
 
+
 match system():
     case "Linux" | "Darwin":
-        _DIR_PATTERN = r"(?<=\/){}(?=\/)"
-        _FILE_PATTERN = r"(?<=\/){}\.py"
+        _DIR_PATTERN = r"(?:(?<=\/))?{}(?=\/)"
+        _FILE_PATTERN = r"(?:(?<=\/))?{}\.py"
     case "Windows":
-        _DIR_PATTERN = r"(?<=\\){}(?=\\)"
-        _FILE_PATTERN = r"(?<=\\){}\.py"
+        _DIR_PATTERN = r"(?:(?<=\\))?{}(?=\\)"
+        _FILE_PATTERN = r"(?:(?<=\\))?{}\.py"
     case _:
-        _DIR_PATTERN = r"(?(?<=\\)|(?<=\/)){}(?=\\|\/)"
-        _FILE_PATTERN = r"(?(?<=\\)|(?<=\/)){}\.py"
+        _DIR_PATTERN = r"(?:(?<=\\)|(?<=\/))?{}(?=\\|\/)"
+        _FILE_PATTERN = r"(?:(?<=\\)|(?<=\/))?{}\.py"
 
 
 def _get_venv_name() -> str:
@@ -50,7 +51,7 @@ def collect_filepaths(path: str, *, exclude: Collection[str] = None) -> list[Pat
 
 
 def separate_filepaths(
-        paths: list[Path], chain: list[str], *, exclude: Collection[str] = None
+        paths: list[Path], chain: list[str], *, exclude: Collection[str] = None,
 ) -> tuple[list[Path], list[Path]]:
     single = []
     chained = []
@@ -69,8 +70,6 @@ def separate_filepaths(
 
 
 def _collect_from_dir(dirpath: str, exclude: Collection[str]) -> list[Path]:
-    global _DEFAULT_EXCLUDE
-
     files_or_dirs = [
         os.path.join(dirpath, fd)
         for fd in os.listdir(dirpath)
@@ -84,8 +83,7 @@ def _collect_from_dir(dirpath: str, exclude: Collection[str]) -> list[Path]:
             continue
 
         for current_path, dirs, files in os.walk(file_or_dir):
-            current_path = Path(current_path)
-            current_filepaths = [current_path / file for file in files if file.endswith(".py")]
+            current_filepaths = [Path(current_path) / file for file in files if file.endswith(".py")]
             filepaths.extend(current_filepaths)
 
     return _filter_filepaths(filepaths, exclude)
@@ -103,8 +101,6 @@ def _collect_from_file(filepath: str, exclude: Collection[str]) -> list[Path]:
 
 
 def _filter_filepaths(filepaths: Collection[Path], exclude: Collection[str]) -> list[Path]:
-    global _DIR_PATTERN, _FILE_PATTERN
-
     if not exclude:
         return filepaths
 

@@ -2,12 +2,12 @@ import pathlib
 import sys
 
 from pyfactoring.utils.pyclones import CloneFinder, CodeBlockClone
-from pyfactoring.utils.pydioms import prefixtree, IdiomFinder
-from pyfactoring.utils.pydioms.possibleidiom import Idiom, CodeBlockIdiom
+from pyfactoring.utils.pydioms import IdiomFinder, prefixtree
+from pyfactoring.utils.pydioms.possibleidiom import CodeBlockIdiom, Idiom
 
 
 def clone(
-        paths: list[pathlib.Path], *, is_chained: bool = False
+        paths: list[pathlib.Path], *, is_chained: bool = False,
 ) -> list[dict[str, list[CodeBlockClone]]] | dict[str, list[CodeBlockClone]]:
     finder = CloneFinder()
     if is_chained:
@@ -17,7 +17,7 @@ def clone(
 
 
 def idiom(
-        paths: list[pathlib.Path], *, is_chained: bool = False
+        paths: list[pathlib.Path], *, is_chained: bool = False,
 ) -> list[dict[Idiom, list[CodeBlockIdiom]]] | dict[Idiom, list[CodeBlockIdiom]]:
     recursion_limit = sys.getrecursionlimit()
     sys.setrecursionlimit(sys.getrecursionlimit() * 100)

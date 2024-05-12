@@ -1,5 +1,3 @@
-__all__ = ["make_prefix_trees", "SubtreeVariant", "PrefixTree", "PrefixNode", "PrefixLeaf"]
-
 import ast
 import pathlib
 from collections.abc import Iterable
@@ -41,7 +39,7 @@ class SubtreeVariant:
 class PrefixLeaf:
     value_to_ids: dict[str, set[int]] = field(default_factory=dict, init=False, repr=False)
     id_to_values: dict[int, tuple[str, CountingType]] = field(
-        default_factory=dict, init=False, repr=False
+        default_factory=dict, init=False, repr=False,
     )
 
     def add_subtree(self, inspected_leaf: ASTInspectedLeaf, subtree_id: int):
@@ -50,7 +48,7 @@ class PrefixLeaf:
         self.id_to_values[subtree_id] = (inspected_leaf.name, inspected_leaf.count_as)
 
     def variant(
-        self, id_: int | None, name_: str | None
+        self, id_: int | None, name_: str | None,
     ) -> tuple[SubtreeVariant | None, set[int], CountingType]:
         if id_ is not None:
             name = self.id_to_values.get(id_)[0]
@@ -85,7 +83,7 @@ class PrefixNode:
             prefix_node_or_leaf.add_subtree(inspected_node_or_leaf, subtree_id)
 
     def variant(
-        self, id_: int | None, name_: str | None
+        self, id_: int | None, name_: str | None,
     ) -> tuple[SubtreeVariant | None, set[int], CountingType]:
         if id_ is not None:
             variant = self.variant_by_id(id_)
@@ -105,7 +103,7 @@ class PrefixNode:
         return self.name_to_variants.get(name_)
 
     def _returning_variant_insert(
-        self, subtree_root: ASTInspectedNode | ASTInspectedLeaf
+        self, subtree_root: ASTInspectedNode | ASTInspectedLeaf,
     ) -> SubtreeVariant:
         variant = SubtreeVariant(subtree_root.ast_node, subtree_root.count_as)
         self.name_to_variants[subtree_root.name] = variant
@@ -176,7 +174,7 @@ class PrefixTree:
 
     @classmethod
     def _contains_node(
-        cls, prefix_root: PrefixNode, inspected_node: ASTInspectedNode, rset: set | None
+        cls, prefix_root: PrefixNode, inspected_node: ASTInspectedNode, rset: set | None,
     ) -> set:
         if inspected_node.name not in prefix_root.name_to_variants:
             return set()

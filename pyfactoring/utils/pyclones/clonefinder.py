@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 
 from pyfactoring.exceptions import UndefinedModeError
 from pyfactoring.settings import pyclones_settings
-from pyfactoring.utils.pyclones.templater import Templater
 from pyfactoring.utils import extract
+from pyfactoring.utils.pyclones.templater import Templater
 
 
 @dataclass
@@ -51,7 +51,7 @@ class CloneFinder:
             self.allowed_nodes: tuple[str] = tuple(self.allowed_nodes)
 
     def find_all(
-            self, filepath: pathlib.Path, *, unfiltered: bool = False
+            self, filepath: pathlib.Path, *, unfiltered: bool = False,
     ) -> dict[str, list[CodeBlockClone]]:
         clones: dict[str, list[CodeBlockClone]] = defaultdict(list)
         module = extract.module(filepath)
@@ -68,7 +68,7 @@ class CloneFinder:
                 self._get_source(node),
                 filepath,
                 node.lineno, node.end_lineno,
-                node.col_offset, node.end_col_offset
+                node.col_offset, node.end_col_offset,
             )
 
             to_template = copy.deepcopy(node)
@@ -88,7 +88,7 @@ class CloneFinder:
         }
 
     def chained_find_all(
-            self, filepaths: Collection[pathlib.Path]
+            self, filepaths: Collection[pathlib.Path],
     ) -> dict[str, list[CodeBlockClone]]:
         clones: dict[str, list[CodeBlockClone]] = {}
         for filepath in filepaths:
@@ -118,5 +118,5 @@ class CloneFinder:
             case _:
                 raise UndefinedModeError(
                     f"Template extraction mode is not specified or is incorrect: "
-                    f"{pyclones_settings.template_mode}"
+                    f"{pyclones_settings.template_mode}",
                 )

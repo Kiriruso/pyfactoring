@@ -61,17 +61,17 @@ AST_NODES_INFO = {
     "FunctionDef": ASTNodeInfo(
         "FunctionDef",
         ("name", "args", "body", "decorator_list", "returns"),
-        CountingType.OPERATOR
+        CountingType.OPERATOR,
     ),
     "AsyncFunctionDef": ASTNodeInfo(
         "AsyncFunctionDef",
         ("name", "args", "body", "decorator_list", "returns"),
-        CountingType.OPERATOR
+        CountingType.OPERATOR,
     ),
     "ClassDef": ASTNodeInfo(
         "ClassDef",
         ("name", "bases", "keywords", "body", "decorator_list"),
-        CountingType.OPERATOR
+        CountingType.OPERATOR,
     ),
     "Return": ASTNodeInfo("Return", ("value",), CountingType.OPERATOR),
     "Delete": ASTNodeInfo("Delete", ("targets",), CountingType.OPERATOR),
@@ -107,12 +107,12 @@ AST_NODES_INFO = {
     "Call": ASTNodeInfo(
         "Call",
         ("func", "args", "keywords", "starargs", "kwargs"),
-        CountingType.OPERATOR
+        CountingType.OPERATOR,
     ),
     "FormattedValue": ASTNodeInfo(
         "FormattedValue",
         ("value", "conversion", "format_spec"),
-        CountingType.OPERATOR
+        CountingType.OPERATOR,
     ),
     "Attribute": ASTNodeInfo("Attribute", ("value", "attr"), CountingType.OPERATOR),
     "Subscript": ASTNodeInfo("Subscript", ("value", "slice"), CountingType.OPERATOR),
@@ -154,7 +154,7 @@ AST_NODES_INFO = {
     "AsyncComprehension": ASTNodeInfo(
         "AsyncComprehension",
         ("target", "iter", "ifs"),
-        CountingType.OPERATOR
+        CountingType.OPERATOR,
     ),
     "ExceptHandler": ASTNodeInfo("ExceptHandler", ("type", "name", "body"), CountingType.OPERATOR),
     "alias": ASTNodeInfo("alias", ("name", "asname"), CountingType.OPERATOR),
@@ -195,7 +195,7 @@ AST_REALIZE_SUBTREE_NODES: frozenset[str] = frozenset(
         "While", "If",
         "With", "AsyncWith",
         "Try", "ExceptHandler",
-    )
+    ),
 )
 
 AST_SPECIFIC_NODES: frozenset = frozenset(
@@ -206,8 +206,8 @@ AST_SPECIFIC_NODES: frozenset = frozenset(
         ast.Nonlocal,
         ast.Constant,
         ast.comprehension,
-        ast.arguments
-    )
+        ast.arguments,
+    ),
 )
 
 AST_TOTAL_UNIQUE_OPERATORS = sum(

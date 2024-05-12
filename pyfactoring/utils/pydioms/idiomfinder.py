@@ -1,28 +1,27 @@
 import math
-
 from collections import defaultdict
 
 from pyfactoring.settings import pydioms_settings
-from pyfactoring.utils.pydioms.possibleidiom import PossibleIdiom, Idiom, IdiomState, CodeBlockIdiom
+from pyfactoring.utils.pydioms.ast_types import AST_TOTAL_UNIQUE_OPERATORS, CountingType
+from pyfactoring.utils.pydioms.possibleidiom import CodeBlockIdiom, Idiom, IdiomState, PossibleIdiom
 from pyfactoring.utils.pydioms.prefixtree import (
     PrefixLeaf,
     PrefixNode,
     PrefixTree,
     SubtreeVariant,
 )
-from pyfactoring.utils.pydioms.ast_types import AST_TOTAL_UNIQUE_OPERATORS, CountingType
 
 
 class IdiomFinder:
-    MIN_IDIOM_COUNT = pydioms_settings.count
-    MIN_IDIOM_LENGTH = pydioms_settings.length
+    min_idiom_count = pydioms_settings.count
+    min_idiom_length = pydioms_settings.length
 
     @classmethod
     def find_all(cls, tree: PrefixTree) -> dict[Idiom, list[CodeBlockIdiom]]:
         if not tree.id_to_freq:
             return {}
 
-        cls.MIN_IDIOM_COUNT = math.log2(sum(freq for i, freq in tree.id_to_freq.items()))
+        cls.min_idiom_count = math.log2(sum(freq for i, freq in tree.id_to_freq.items()))
 
         idioms: dict[frozenset[int], Idiom] = {}
         rejected_idioms: set[frozenset[int]] = set()
@@ -51,19 +50,19 @@ class IdiomFinder:
 
             while True:
                 unprocessed_idiom_id, state = cls._find_unprocessed_state(
-                    state, states, processed_variants
+                    state, states, processed_variants,
                 )
 
                 if not states:
                     break
 
                 idiom_id = cls._find_idiom_in_tree(
-                    tree, unprocessed_idiom_id, state, states, processed_variants
+                    tree, unprocessed_idiom_id, state, states, processed_variants,
                 )
                 processed_variants[idiom_id] = True
                 state = max(states, key=lambda st: st.efficiency)
 
-                if not (state.idiom_length < cls.MIN_IDIOM_LENGTH or state.efficiency < 0):
+                if not (state.idiom_length < cls.min_idiom_length or state.efficiency < 0):
                     cls._process_idiom(idiom_id, idioms, state, states, rejected_idioms, efficiencies)
 
         filtered_idioms: dict[frozenset[int], Idiom] = {}
@@ -103,8 +102,8 @@ class IdiomFinder:
                         inspected_tree.ast_node.lineno,
                         inspected_tree.ast_node.end_lineno,
                         inspected_tree.ast_node.col_offset,
-                        inspected_tree.ast_node.end_col_offset
-                    )
+                        inspected_tree.ast_node.end_col_offset,
+                    ),
                 )
 
         return idioms
@@ -175,7 +174,7 @@ class IdiomFinder:
         for i, _ in enumerate(state.edges):
             possible, count_as = cls._expand_tree(tree, state, i, idiom_id)
 
-            if possible.total_trees < cls.MIN_IDIOM_COUNT or possible.total_trees == 1:
+            if possible.total_trees < cls.min_idiom_count or possible.total_trees == 1:
                 continue
 
             if possible.total_trees == state.total_trees:
@@ -205,7 +204,7 @@ class IdiomFinder:
 
     @classmethod
     def _find_unprocessed_state(
-        cls, state: IdiomState, states: list[IdiomState], processed_variants: list[bool]
+        cls, state: IdiomState, states: list[IdiomState], processed_variants: list[bool],
     ) -> tuple[int, IdiomState]:
         while True:
             idiom_id = next(state)
@@ -264,7 +263,7 @@ class IdiomFinder:
             rejected_idioms.update(cls._reject(state, states, idioms, efficiencies))
             return
 
-        if state.total_trees < cls.MIN_IDIOM_COUNT:
+        if state.total_trees < cls.min_idiom_count:
             rejected_idioms.update(cls._reject(state, states, idioms, efficiencies))
             return
 

@@ -15,7 +15,7 @@ class CommonSettings(BaseSettings):
     pack_consts: Annotated[bool, Field(default=False)]
 
     diff: Annotated[bool, Field(default=False)]
-    workers: Annotated[int, Field(default=1)]
+    workers: Annotated[int, Field(ge=1, default=1)]
     exclude: Annotated[list[str], Field(default_factory=list)]
     chain: Annotated[list[str], Field(default=list)]
 
@@ -23,16 +23,16 @@ class CommonSettings(BaseSettings):
 
 
 class PydiomsSettings(BaseSettings):
-    count: Annotated[int, Field(ge=0, default=5)]
-    length: Annotated[int, Field(gt=0, default=10)]
+    count: Annotated[int, Field(ge=1, default=5)]
+    length: Annotated[int, Field(ge=1, default=10)]
     verbose: Annotated[bool, Field(default=False)]
 
     model_config = SettingsConfigDict(extra="ignore")
 
 
 class PyclonesSettings(BaseSettings):
-    count: Annotated[int, Field(ge=0, default=2)]
-    length: Annotated[int, Field(gt=0, default=5)]
+    count: Annotated[int, Field(ge=1, default=2)]
+    length: Annotated[int, Field(ge=1, default=5)]
     template_mode: Literal["tree", "code"] | None = None
     template_view: bool = False
 
@@ -54,19 +54,25 @@ def _load_config():
     return {
         "common": pyfactoring,
         "pydioms": pyfactoring.get("pydioms", {}),
-        "pyclones": pyfactoring.get("pyclones", {})
+        "pyclones": pyfactoring.get("pyclones", {}),
     }
 
 
 def _assign_arguments(config: dict):
-    if args.action:
+    if not args:
+        return
+
+    if args.action is not None:
         config["common"]["action"] = args.action
 
         if args.action == "restore":
             return
 
-        if args.action == "format" and args.pack_consts:
-            config["common"]["pack_consts"] = args.pack_consts
+        if args.action == "format":
+            if args.pack_consts:
+                config["common"]["pack_consts"] = args.pack_consts
+            if args.diff:
+                config["common"]["diff"] = True
 
         config["common"]["paths"] = (
             args.paths.split()
@@ -76,7 +82,7 @@ def _assign_arguments(config: dict):
 
         if args.chain_all and args.chain:
             raise OptionsConflictError(
-                f"The passed options are incompatible: '--chain-all' and '--chain'"
+                "The passed options are incompatible: '--chain-all' and '--chain'",
             )
 
         if args.chain_all:
@@ -87,19 +93,16 @@ def _assign_arguments(config: dict):
         if args.exclude:
             config["common"]["exclude"] = args.exclude
 
-    if args.diff:
-        config["common"]["diff"] = True
-
-    if args.workers:
+    if args.workers is not None:
         config["common"]["workers"] = args.workers
 
     if args.pd_verbose:
         config["pydioms"]["verbose"] = args.pd_verbose
 
-    if args.pd_count:
+    if args.pd_count is not None:
         config["pydioms"]["count"] = args.pd_count
 
-    if args.pd_length:
+    if args.pd_length is not None:
         config["pydioms"]["length"] = args.pd_length
 
     if args.template_mode:
@@ -108,10 +111,10 @@ def _assign_arguments(config: dict):
     if args.template_view:
         config["pyclones"]["template_view"] = args.template_view
 
-    if args.pc_count:
+    if args.pc_count is not None:
         config["pyclones"]["count"] = args.pc_count
 
-    if args.pc_length:
+    if args.pc_length is not None:
         config["pyclones"]["length"] = args.pc_length
 
 

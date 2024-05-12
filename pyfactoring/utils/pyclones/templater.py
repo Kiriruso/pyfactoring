@@ -66,7 +66,7 @@ class Templater(ast.NodeTransformer):
     def visit_Subscript(self, node: ast.Subscript) -> ast.AST:
         node.value = self._templatize(node.value)
 
-        if isinstance(node.slice, (ast.Name, ast.Constant)):
+        if isinstance(node.slice, ast.Name | ast.Constant):
             node.slice = self._templatize(node.slice)
         elif isinstance(node.slice, ast.Tuple):
             node.slice.elts = self._templatize(node.slice.elts)
@@ -207,7 +207,7 @@ class Templater(ast.NodeTransformer):
         with self.scope():
             for decorator in node.decorator_list:
                 if isinstance(decorator, ast.Call):
-                    decorator = self._templatize(decorator)
+                    self._templatize(decorator)
             with self.scope():
                 node.args = self.visit(node.args)
                 node.body = self._templatize(node.body)
@@ -291,7 +291,8 @@ class Templater(ast.NodeTransformer):
         return node
 
     def visit_MatchStar(self, node: ast.MatchStar) -> ast.AST:
-        node.name = self._scope.get_name(node.name)
+        if node.name:
+            node.name = self._scope.get_name(node.name)
         return node
 
     def visit_MatchSequence(self, node: ast.MatchSequence) -> ast.AST:
@@ -324,7 +325,7 @@ class Templater(ast.NodeTransformer):
     def visit_JoinedStr(self, node: ast.JoinedStr) -> ast.AST:
         for value in node.values:
             if isinstance(value, ast.FormattedValue):
-                value = self._templatize(value)
+                self._templatize(value)
         return node
 
     def visit_FormattedValue(self, node: ast.FormattedValue) -> ast.AST:
@@ -366,7 +367,7 @@ class Templater(ast.NodeTransformer):
         return node
 
     def visit_collection(
-            self, body: list[ast.stmt | ast.expr | ast.keyword]
+            self, body: list[ast.stmt | ast.expr | ast.keyword],
     ) -> list[ast.stmt | ast.expr | ast.keyword]:
         return list(map(self._templatize, body))
 
@@ -402,7 +403,7 @@ class Templater(ast.NodeTransformer):
         return node
 
     def _if_for_while_visit(self, node: ast.If | ast.IfExp | ast.While | ast.For) -> ast.AST:
-        is_for = isinstance(node, (ast.For, ast.AsyncFor))
+        is_for = isinstance(node, ast.For | ast.AsyncFor)
 
         with self.scope():
             if is_for:

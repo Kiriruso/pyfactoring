@@ -1,16 +1,41 @@
 [tool.ruff]
-line-length = 105
-indent-width = 4
 target-version = "py312"
+line-length = 105
+exclude = [
+    "test/",
+    "__init__.py",
+]
 
 [tool.ruff.lint]
 select = [
-    "I",
+    "A",
     "E",
     "W",
+    "F",
+    "I",
     "N",
+    "UP",
+    "PL",
+    "COM",
 ]
-ignore = ["F403", "N802"]
+
+ignore = [
+    "N818",    # exception name
+    "N802",    # lowercase func name
+    "PLR2004", # magic value
+    "PLR0913", # too many arguments in func def
+    "UP015",   # unnecessary open mode parameters
+]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -22,10 +47,10 @@ action = "check"
 diff = false
 workers = 1
 paths = ["."]
-chain = []
+chain = ["/pyfactoring/pyclones/"]
 chain_all = false
 pack_consts = false
-exclude = []
+exclude = ["/test"]
 
 [tool.pyfactoring.pydioms]
 count = 5

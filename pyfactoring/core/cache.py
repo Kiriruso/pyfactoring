@@ -1,16 +1,16 @@
+import itertools
 import os
 import pathlib
 import shutil
 import time
+
 from colorama import Fore, Style
-from itertools import chain
+
 
 _CACHE_DIR = pathlib.Path("./.pyfactoring_cache")
 
 
 def copy_files(single_paths: list[pathlib.Path], chained_paths: list[pathlib.Path]):
-    global _CACHE_DIR
-
     head_path = _CACHE_DIR / "head"
     paths_path = head_path / ".paths"
     recovery_path = _CACHE_DIR / "RECOVERY"
@@ -33,17 +33,15 @@ def copy_files(single_paths: list[pathlib.Path], chained_paths: list[pathlib.Pat
             recovery_file.write("head\n")
 
     os.makedirs(head_path, exist_ok=True)
-    for path in chain(single_paths, chained_paths):
+    for path in itertools.chain(single_paths, chained_paths):
         shutil.copyfile(path, head_path / path.name)
 
     with open(paths_path, "w") as paths_file:
-        for path in chain(single_paths, chained_paths):
+        for path in itertools.chain(single_paths, chained_paths):
             paths_file.write(f"{path}\n")
 
 
 def restore():
-    global _CACHE_DIR
-
     head_path = _CACHE_DIR / "head"
     paths_path = head_path / ".paths"
     recovery_path = _CACHE_DIR / "RECOVERY"
@@ -75,7 +73,6 @@ def restore():
 
 
 def create_dir():
-    global _CACHE_DIR
     os.makedirs(_CACHE_DIR, exist_ok=True)
 
     gitignore_path = _CACHE_DIR / ".gitignore"

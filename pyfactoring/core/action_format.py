@@ -1,6 +1,7 @@
 import itertools
 import pathlib
 from collections import defaultdict
+
 from colorama import Fore, Style
 
 from pyfactoring.core import analysis, cache
@@ -76,7 +77,7 @@ def format_chained(paths: list[pathlib.Path]):
                 source_file.writelines(source)
             print(
                 f"{path}:0: {Fore.GREEN}[C] Formatted: "
-                f"{Style.RESET_ALL}add function {Fore.LIGHTWHITE_EX}{func.name}{Style.RESET_ALL}"
+                f"{Style.RESET_ALL}add function {func.name}",
             )
 
         chained_clones = analysis.clone(paths, is_chained=True)
@@ -131,7 +132,7 @@ def format_single(paths: list[pathlib.Path]):
             source_file.writelines(cleared_source)
         print(
             f"{main_file}:0: {Fore.GREEN}[S] Formatted: "
-            f"{Style.RESET_ALL}add function {Fore.LIGHTWHITE_EX}{func.name}{Style.RESET_ALL}"
+            f"{Style.RESET_ALL}add function {func.name}",
         )
 
         single_clones = analysis.clone(paths)
@@ -142,7 +143,7 @@ def action_format():
     single_paths, chained_paths = separate_filepaths(
         common_settings.paths,
         common_settings.chain,
-        exclude=common_settings.exclude
+        exclude=common_settings.exclude,
     )
 
     cache.copy_files(single_paths, chained_paths)

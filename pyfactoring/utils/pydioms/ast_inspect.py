@@ -1,11 +1,8 @@
-__all__ = ["make_inspected_tree", "ASTInspectedNode", "ASTInspectedLeaf"]
-
 import ast
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from pathlib import Path
 from warnings import warn
-
 
 from pyfactoring.utils.pydioms.ast_types import (
     AST_NODES_INFO,
@@ -45,7 +42,7 @@ class ASTInspectedNode(ASTInspectedLeaf):
 
     realize_subtree: bool = field(default=False, init=False, repr=False)
     children: list["ASTInspectedNode | ASTInspectedLeaf"] = field(
-        default_factory=list, init=False, repr=False
+        default_factory=list, init=False, repr=False,
     )
 
     def __iter__(self):
@@ -57,8 +54,9 @@ class ASTInspectedNode(ASTInspectedLeaf):
         self.total_operators += inspect_node.total_operators
         self.total_operands += inspect_node.total_operands
 
+
 def dump_inspected_tree(
-    root: ASTInspectedNode | ASTInspectedLeaf, *, indent: int = 0, subindent: int = 0
+    root: ASTInspectedNode | ASTInspectedLeaf, *, indent: int = 0, subindent: int = 0,
 ) -> Generator[str, None, None]:
     """Построчное получение строкового представления проинспектированного AST
 
@@ -79,7 +77,7 @@ def dump_inspected_tree(
 
 
 def source_from_inspected_tree(
-        filepath: str | Path, root: ASTInspectedNode
+        filepath: str | Path, root: ASTInspectedNode,
 ) -> Generator[str, None, None]:
     """Поиск частей исходного кода, соответствующих узлам проинспектированного AST,
     реализующего поддеревья, например: For, ...
@@ -282,7 +280,7 @@ def _make_comprehension(root: ast.comprehension, filepath: str) -> ASTInspectedN
 
 
 def _make_args(
-    posonly: list[ast.arg], other: list[ast.arg], defaults: list[ast.expr], filepath: str
+    posonly: list[ast.arg], other: list[ast.arg], defaults: list[ast.expr], filepath: str,
 ) -> tuple[list[ASTInspectedNode], list[ASTInspectedNode]]:
     it = len(defaults) - len(posonly) - len(other)
 
@@ -307,7 +305,7 @@ def _make_args(
 
 
 def _make_kwargs(
-        vararg: ast.arg, kwarg: ast.arg, filepath: str
+        vararg: ast.arg, kwarg: ast.arg, filepath: str,
 ) -> tuple[ASTInspectedNode, ASTInspectedNode]:
     def internal_make(arg: ast.arg) -> ASTInspectedNode:
         if arg is None:
