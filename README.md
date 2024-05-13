@@ -220,6 +220,14 @@ template_mode = "code"
 template_view = false
 ```
 
+Configuration options can also be provided using special command line arguments, for example:
+
+```shell
+pyfactoring --template-view --pc-count=5 check --chain-all
+```
+
+See pyfactoring help for more on Pyfactoring's top-level commands, or pyfactoring help check and pyfactoring help format for more on the linting and formatting commands, respectively.
+
 ## Support
 
 Having trouble? Check out the existing issues on [GitHub](https://github.com/Kiriruso/pyfactoring/issues), or feel free to [open a new one](https://github.com/Kiriruso/pyfactoring/issues/new).
