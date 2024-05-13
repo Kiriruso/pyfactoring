@@ -110,8 +110,28 @@ def _max_len_clone(clones: dict):
     return template, clones[template]
 
 
-def format_files(paths: list[Path], is_chained: bool = False):
+def _update_paths(
+        clones: list[dict[str, list[CodeBlockClone]]] | dict[str, list[CodeBlockClone]],
+        *,
+        is_chained: bool = False,
+) -> list[Path]:
+    if is_chained:
+        return list({
+            block.file
+            for blocks in clones.values()
+            for block in blocks
+        })
+
+    return list({
+        blocks[0].file
+        for clone in clones
+        for blocks in clone.values()
+    })
+
+
+def format_files(paths: list[Path], *, is_chained: bool = False):
     clones_from_files = analysis.clone(paths, is_chained=is_chained)
+    paths_with_clones = _update_paths(clones_from_files, is_chained=is_chained)
 
     func_id = 0
     while clones_from_files:
@@ -129,15 +149,14 @@ def format_files(paths: list[Path], is_chained: bool = False):
 
         _write_sources(sources)
 
-        clones_from_files = analysis.clone(paths, is_chained=is_chained)
+        clones_from_files = analysis.clone(paths_with_clones, is_chained=is_chained)
+        paths_with_clones = _update_paths(clones_from_files, is_chained=is_chained)
         func_id += 1
 
 
 def action_format():
     single_paths, chained_paths = separate_filepaths(
-        common_settings.paths,
-        common_settings.chain,
-        exclude=common_settings.exclude,
+        common_settings.paths, common_settings.chain, exclude=common_settings.exclude,
     )
 
     cache.copy_files(single_paths, chained_paths)

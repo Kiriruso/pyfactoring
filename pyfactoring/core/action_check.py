@@ -7,7 +7,7 @@ from pyfactoring.settings import common_settings, pyclones_settings
 from pyfactoring.utils.path import separate_filepaths
 
 
-def display_analysis(title: str, data: list | dict, *, is_idiom: bool = False):
+def _display_analysis(title: str, data: list | dict, *, is_idiom: bool = False):
     if not data:
         return
 
@@ -62,13 +62,16 @@ def display_analysis(title: str, data: list | dict, *, is_idiom: bool = False):
 
 
 def action_check():
-    single, chained = separate_filepaths(
+    single_paths, chained_paths = separate_filepaths(
         common_settings.paths, common_settings.chain, exclude=common_settings.exclude,
     )
-    sc, cc = analysis.clone(single), analysis.clone(chained, is_chained=True)
-    si, ci = analysis.idiom(single), analysis.idiom(chained, is_chained=True)
 
-    display_analysis("FINDING CLONES IN SINGLE FILES", sc)
-    display_analysis("FINDING CLONES IN CHAINED FILES", cc)
-    display_analysis("FINDING IDIOMS IN SINGLE FILES", si, is_idiom=True)
-    display_analysis("FINDING IDIOMS IN CHAINED FILES", ci, is_idiom=True)
+    single_clones = analysis.clone(single_paths)
+    chained_clones = analysis.clone(chained_paths, is_chained=True)
+    single_idioms = analysis.idiom(single_paths)
+    chained_idioms = analysis.idiom(chained_paths, is_chained=True)
+
+    _display_analysis("FINDING CLONES IN SINGLE FILES", single_clones)
+    _display_analysis("FINDING CLONES IN CHAINED FILES", chained_clones)
+    _display_analysis("FINDING IDIOMS IN SINGLE FILES", single_idioms, is_idiom=True)
+    _display_analysis("FINDING IDIOMS IN CHAINED FILES", chained_idioms, is_idiom=True)

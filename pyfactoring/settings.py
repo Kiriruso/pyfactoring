@@ -17,7 +17,8 @@ class CommonSettings(BaseSettings):
     diff: Annotated[bool, Field(default=False)]
     workers: Annotated[int, Field(ge=1, default=1)]
     exclude: Annotated[list[str], Field(default_factory=list)]
-    chain: Annotated[list[str], Field(default=list)]
+    chain: Annotated[list[str], Field(default_factory=list)]
+    chain_all: Annotated[bool, Field(default=False)]
 
     model_config = SettingsConfigDict(extra="ignore")
 
@@ -33,8 +34,8 @@ class PydiomsSettings(BaseSettings):
 class PyclonesSettings(BaseSettings):
     count: Annotated[int, Field(ge=1, default=2)]
     length: Annotated[int, Field(ge=1, default=5)]
-    template_mode: Literal["tree", "code"] | None = None
-    template_view: bool = False
+    template_mode: Annotated[Literal["code", "tree"], Field(default="code")]
+    template_view: Annotated[bool, Field(default=False)]
 
     model_config = SettingsConfigDict(extra="ignore")
 
