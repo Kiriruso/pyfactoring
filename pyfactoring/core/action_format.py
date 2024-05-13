@@ -1,142 +1,134 @@
 import itertools
-import pathlib
 from collections import defaultdict
+from pathlib import Path
 
 from colorama import Fore, Style
 
 from pyfactoring.core import analysis, cache
-from pyfactoring.core.templatedfunc import create_function
+from pyfactoring.core.templatedfunc import TemplatedFunc
 from pyfactoring.settings import common_settings
 from pyfactoring.utils.path import separate_filepaths
+from pyfactoring.utils.pyclones import CodeBlockClone
 
 
-def mainfile_from(blocks: list) -> pathlib.Path:
-    return blocks[0].file
+def _read_sources(blocks: list[CodeBlockClone]) -> dict[Path, list[str]]:
+    sources: dict[Path, list[str]] = defaultdict(list)
+
+    for block in blocks:
+        if block.file not in sources:
+            with open(block.file, "r", encoding="utf-8") as source_file:
+                sources[block.file] = source_file.readlines()
+
+    return sources
 
 
-def format_chained(paths: list[pathlib.Path]):
-    chained_clones = analysis.clone(paths, is_chained=True)
-
-    if not chained_clones:
-        print(f"{Fore.RED}[C] Nothing to format{Style.RESET_ALL}")
-        return
-
-    func_number = 0
-    while chained_clones:
-        template = max(chained_clones.keys(), key=len)
-        blocks = chained_clones[template]
-
-        main_file = mainfile_from(blocks)
-        func = create_function(func_number, template, main_file)
-
-        sources: dict[pathlib.Path, list[str]] = defaultdict(list)
-        for block in blocks:
-            if block.file not in sources:
-                with open(block.file, "r", encoding="utf-8") as source_file:
-                    sources[block.file].extend(source_file.readlines())
-
-            params = itertools.chain(block.vars, block.consts)
-            call = func.call(params)
-            sources[block.file][block.lineno - 1] = f"{call}\n"
-
-        prev_block_ends: dict[pathlib.Path, int] = defaultdict(int)
-        replaced_sources: dict[pathlib.Path, list[str]] = defaultdict(list)
-
-        for block in blocks:
-            source = sources[block.file]
-            replaced_sources[block.file].extend(source[prev_block_ends[block.file]:block.lineno])
-            prev_block_ends[block.file] = block.end_lineno
-
-        for path, source in sources.items():
-            replaced_sources[path].extend(source[prev_block_ends[path]:])
-
-        cleared_sources: dict[pathlib.Path, list[str]] = {}
-        for block in blocks:
-            if block.file in cleared_sources:
-                continue
-
-            after_imports = 0
-            for line in replaced_sources[block.file]:
-                if "import" not in line:
-                    break
-                after_imports += 1
-
-            source = replaced_sources[block.file][:after_imports]
-            if block.file == main_file:
-                if after_imports != 0:
-                    source.append("\n\n")
-                source.append(f"{func.definition}\n\n")
-            else:
-                source.append(f"{func.import_from(main_file)}\n")
-            source.extend(replaced_sources[block.file][after_imports:])
-
-            cleared_sources[block.file] = source
-
-        for path, source in cleared_sources.items():
-            with open(path, "w", encoding="utf-8") as source_file:
-                source_file.writelines(source)
-            print(
-                f"{path}:0: {Fore.GREEN}[C] Formatted: "
-                f"{Style.RESET_ALL}add function {func.name}",
-            )
-
-        chained_clones = analysis.clone(paths, is_chained=True)
-        func_number += 1
+def _write_sources(sources: dict[Path, list[str]]):
+    for path, source in sources.items():
+        with open(path, "w", encoding="utf-8") as source_file:
+            source_file.writelines(source)
 
 
-def format_single(paths: list[pathlib.Path]):
-    single_clones = analysis.clone(paths)
+def _insert_function_call(sources: dict[Path, list[str]], block: CodeBlockClone, func: TemplatedFunc):
+    params = itertools.chain(block.vars, block.consts)
+    call = func.call(params)
+    sources[block.file][block.lineno - 1] = f"{call}\n"
 
-    if not single_clones:
-        print(f"{Fore.RED}[S] Nothing to format{Style.RESET_ALL}")
-        return
 
-    func_number = 0
-    while single_clones:
-        clones = single_clones.pop()
-        template = max(clones.keys(), key=len)
-        blocks = clones[template]
+def _remove_remaining_clone_parts(
+        sources: dict[Path, list[str]], blocks: list[CodeBlockClone],
+) -> dict[Path, list[str]]:
+    ends: dict[Path, int] = defaultdict(int)
+    cleared_sources: dict[Path, list[str]] = defaultdict(list)
 
-        main_file = mainfile_from(blocks)
-        func = create_function(func_number, template, main_file)
-
-        source: list[str]
-        with open(main_file, "r", encoding="utf-8") as source_file:
-            source = source_file.readlines()
-
-        for block in blocks:
-            params = itertools.chain(block.vars, block.consts)
-            call = func.call(params)
-            source[block.lineno - 1] = f"{call}\n"
-
-        prev_block_end = 0
-        replaced_source: list[str] = []
-        for block in blocks:
-            replaced_source.extend(source[prev_block_end:block.lineno])
-            prev_block_end = block.end_lineno
-        replaced_source.extend(source[prev_block_end:])
-
-        after_imports = 0
-        for line in replaced_source:
-            if "import" not in line:
-                break
-            after_imports += 1
-
-        cleared_source: list[str] = replaced_source[:after_imports]
-        if after_imports != 0:
-            cleared_source.append("\n\n")
-        cleared_source.append(f"{func.definition}\n\n")
-        cleared_source.extend(replaced_source[after_imports:])
-
-        with open(main_file, "w", encoding="utf-8") as source_file:
-            source_file.writelines(cleared_source)
-        print(
-            f"{main_file}:0: {Fore.GREEN}[S] Formatted: "
-            f"{Style.RESET_ALL}add function {func.name}",
+    for block in blocks:
+        source = sources[block.file]
+        cleared_sources[block.file].extend(
+            source[ends[block.file]:block.lineno],
         )
+        ends[block.file] = block.end_lineno
 
-        single_clones = analysis.clone(paths)
-        func_number += 1
+    for path, source in sources.items():
+        cleared_sources[path].extend(source[ends[path]:])
+
+    return cleared_sources
+
+
+def _replace_clones_with_calls(
+        sources: dict[Path, list[str]], blocks: list[CodeBlockClone], func: TemplatedFunc,
+) -> dict[Path, list[str]]:
+    for block in blocks:
+        _insert_function_call(sources, block, func)
+
+    return _remove_remaining_clone_parts(sources, blocks)
+
+
+def _find_lineno_after_imports(lines: list[str]) -> int:
+    lineno_after_imports = 0
+
+    for lineno, line in enumerate(lines):
+        if "import" not in line:
+            lineno_after_imports = lineno
+            break
+
+    return lineno_after_imports
+
+
+def _insert_func_def_or_import(
+    sources: dict[Path, list[str]],
+    blocks: list[CodeBlockClone],
+    func: TemplatedFunc,
+    main_file: Path,
+):
+    changed_sources: dict[Path, list[str]] = {}
+    for block in blocks:
+        if block.file in changed_sources:
+            continue
+
+        end_lineno_imps = _find_lineno_after_imports(sources[block.file])
+        source = sources[block.file][:end_lineno_imps]
+
+        print(f"{block.file}:{len(source)}: {Fore.GREEN}Formatted: {Style.RESET_ALL}", end='')
+        if block.file == main_file:
+            if end_lineno_imps > 0:
+                source.append("\n\n")
+            source.append(f"{func.definition}\n\n")
+            print(f"define {func.name}")
+        else:
+            source.append(f"{func.import_from(main_file)}\n")
+            print(f"import {func.name}")
+
+        source.extend(sources[block.file][end_lineno_imps:])
+        changed_sources[block.file] = source
+
+    return changed_sources
+
+
+def _max_len_clone(clones: dict):
+    template = max(clones.keys(), key=len)
+    return template, clones[template]
+
+
+def format_files(paths: list[Path], is_chained: bool = False):
+    clones_from_files = analysis.clone(paths, is_chained=is_chained)
+
+    func_id = 0
+    while clones_from_files:
+        if not is_chained:
+            clones_from_files = clones_from_files[0]
+
+        template, blocks = _max_len_clone(clones_from_files)
+        sources = _read_sources(blocks)
+
+        target: Path = blocks[0].file
+        func = TemplatedFunc.make(func_id, target, template)
+
+        sources = _replace_clones_with_calls(sources, blocks, func)
+        sources = _insert_func_def_or_import(sources, blocks, func, target)
+
+        _write_sources(sources)
+
+        clones_from_files = analysis.clone(paths, is_chained=is_chained)
+        func_id += 1
 
 
 def action_format():
@@ -148,5 +140,5 @@ def action_format():
 
     cache.copy_files(single_paths, chained_paths)
 
-    format_single(single_paths)
-    format_chained(chained_paths)
+    format_files(single_paths)
+    format_files(chained_paths, is_chained=True)

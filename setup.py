@@ -15,6 +15,7 @@ setup(
         "dev": [
             "ruff >= 0.4.2",
             "pytest >= 8.2.0",
+            "pre-commit >= 3.7.1",
         ],
     },
     packages=find_packages(),

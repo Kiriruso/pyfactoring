@@ -17,7 +17,7 @@ class IdiomFinder:
     min_idiom_length = pydioms_settings.length
 
     @classmethod
-    def find_all(cls, tree: PrefixTree) -> dict[Idiom, list[CodeBlockIdiom]]:
+    def find_all(cls, tree: PrefixTree) -> dict[Idiom, list[CodeBlockIdiom]]:  # noqa: PLR0912
         if not tree.id_to_freq:
             return {}
 

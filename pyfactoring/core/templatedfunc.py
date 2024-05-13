@@ -22,34 +22,34 @@ class TemplatedFunc:
         module = module.rstrip(".py")
         return f"from {module} import {self.name}"
 
+    @staticmethod
+    def make(idx: int, filepath: Path, template: str) -> "TemplatedFunc":
+        filename = filepath.name.rstrip(".py")
 
-def create_function(idx: int, template: str, filepath: Path) -> TemplatedFunc:
-    filename = filepath.name.rstrip(".py")
+        is_async = bool(re.search(r"async|await", template))
+        func_template = "# Pyfactoring: rename this!\ndef {}({}):\n{}"
+        if is_async:
+            func_template = f"async {func_template}"
 
-    is_async = bool(re.search(r"async|await", template))
-    func_template = "# Pyfactoring: rename this!\ndef {}({}):\n{}"
-    if is_async:
-        func_template = f"async {func_template}"
+        variables = sorted(set(re.findall(r"(__var_\d+__)", template)))
+        if common_settings.pack_consts:
+            params = ", ".join(variables)
+            params = f"{params}, *consts"
+        else:
+            constants = sorted(set(re.findall(r"(__const_\d+__)", template)))
+            params = ", ".join(itertools.chain(variables, constants))
 
-    variables = sorted(set(re.findall(r"(__var_\d+__)", template)))
-    if common_settings.pack_consts:
-        params = ", ".join(variables)
-        params = f"{params}, *consts"
-    else:
-        constants = sorted(set(re.findall(r"(__const_\d+__)", template)))
-        params = ", ".join(itertools.chain(variables, constants))
+        name = f"{filename}_func_{idx}"
+        if common_settings.pack_consts:
+            body = re.sub(r"'__const_(\d+)__'", r"consts[\1]", template)
+        else:
+            body = re.sub(r"'(__const_\d+__)'", r"\1", template)
+        body = "\n    ".join(f"    {body}".splitlines())
 
-    name = f"{filename}_func_{idx}"
-    if common_settings.pack_consts:
-        body = re.sub(r"'__const_(\d+)__'", r"consts[\1]", template)
-    else:
-        body = re.sub(r"'(__const_\d+__)'", r"\1", template)
-    body = "\n    ".join(f"    {body}".splitlines())
+        definition = func_template.format(
+            name,
+            params,
+            body,
+        )
 
-    definition = func_template.format(
-        name,
-        params,
-        body,
-    )
-
-    return TemplatedFunc(name, definition, is_async)
+        return TemplatedFunc(name, definition, is_async)

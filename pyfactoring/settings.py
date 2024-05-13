@@ -58,11 +58,11 @@ def _load_config():
     }
 
 
-def _assign_arguments(config: dict):
+def _assign_arguments(config: dict):  # noqa: PLR0912
     if not args:
         return
 
-    if args.action is not None:
+    if args.action:
         config["common"]["action"] = args.action
 
         if args.action == "restore":

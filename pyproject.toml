@@ -18,7 +18,6 @@ select = [
     "PL",
     "COM",
 ]
-
 ignore = [
     "N818",    # exception name
     "N802",    # lowercase func name
@@ -29,13 +28,6 @@ ignore = [
 
 [tool.ruff.lint.isort]
 lines-after-imports = 2
-section-order = [
-    "future",
-    "standard-library",
-    "third-party",
-    "first-party",
-    "local-folder",
-]
 
 [tool.ruff.format]
 quote-style = "double"
