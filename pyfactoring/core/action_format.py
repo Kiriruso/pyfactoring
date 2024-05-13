@@ -33,6 +33,8 @@ def _insert_function_call(sources: dict[Path, list[str]], block: CodeBlockClone,
     call = func.call(params)
     sources[block.file][block.lineno - 1] = f"{call}\n"
 
+    print(f"{block.file}:0: {Fore.GREEN}Formatted:{Style.RESET_ALL} clone replaced by call {call}")
+
 
 def _remove_remaining_clone_parts(
         sources: dict[Path, list[str]], blocks: list[CodeBlockClone],

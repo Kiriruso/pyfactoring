@@ -4,21 +4,8 @@ import re
 import sys
 from collections.abc import Collection
 from pathlib import Path
-from platform import system
 
 from pyfactoring.exceptions import FileOrDirNotFoundError
-
-
-match system():
-    case "Linux" | "Darwin":
-        _DIR_PATTERN = r"(?:(?<=\/))?{}(?=\/)"
-        _FILE_PATTERN = r"(?:(?<=\/))?{}\.py"
-    case "Windows":
-        _DIR_PATTERN = r"(?:(?<=\\))?{}(?=\\)"
-        _FILE_PATTERN = r"(?:(?<=\\))?{}\.py"
-    case _:
-        _DIR_PATTERN = r"(?:(?<=\\)|(?<=\/))?{}(?=\\|\/)"
-        _FILE_PATTERN = r"(?:(?<=\\)|(?<=\/))?{}\.py"
 
 
 def _get_venv_name() -> str:
@@ -29,10 +16,22 @@ def _get_venv_name() -> str:
 
 _DEFAULT_EXCLUDE = (
     _get_venv_name(),
+    "venv",
+    ".venv",
+    "build",
+    "_build",
+    "__pycache__",
+    "__pypackages__",
+    "dist",
+    "site-packages",
     ".pyfactoring_cache",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
     ".idea",
     ".vscode",
     ".git",
+    ".git-rewrite",
 )
 
 
@@ -101,17 +100,7 @@ def _collect_from_file(filepath: str, exclude: Collection[str]) -> list[Path]:
 
 
 def _filter_filepaths(filepaths: Collection[Path], exclude: Collection[str]) -> list[Path]:
-    if not exclude:
-        return filepaths
-
-    patterns: list[str] = []
-    for file_or_dir in exclude:
-        if file_or_dir.endswith('.py'):
-            pattern = _FILE_PATTERN.format(file_or_dir.replace(".py", ""))
-        else:
-            pattern = _DIR_PATTERN.format(file_or_dir)
-        patterns.append(pattern)
-
+    patterns = [re.escape(str(Path(path))) for path in exclude]
     return [
         filepath
         for filepath in filepaths
