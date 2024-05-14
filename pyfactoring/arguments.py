@@ -92,6 +92,11 @@ general_options.add_argument(
 # === SPECIFIC OPTIONS === #
 pydioms_group = parser.add_argument_group("pydioms options")
 pydioms_group.add_argument(
+    "--pd-enable",
+    action="store_true",
+    help="enables idiom analysis",
+)
+pydioms_group.add_argument(
     "--pd-verbose",
     action="store_true",
     help="displays additional information",

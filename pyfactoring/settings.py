@@ -24,9 +24,10 @@ class CommonSettings(BaseSettings):
 
 
 class PydiomsSettings(BaseSettings):
+    enable: Annotated[bool, Field(default=False)]
+    verbose: Annotated[bool, Field(default=False)]
     count: Annotated[int, Field(ge=1, default=5)]
     length: Annotated[int, Field(ge=1, default=10)]
-    verbose: Annotated[bool, Field(default=False)]
 
     model_config = SettingsConfigDict(extra="ignore")
 
@@ -97,14 +98,17 @@ def _assign_arguments(config: dict):  # noqa: PLR0912
     if args.workers is not None:
         config["common"]["workers"] = args.workers
 
-    if args.pd_verbose:
-        config["pydioms"]["verbose"] = args.pd_verbose
+    if args.pd_enable:
+        config["pydioms"]["enable"] = args.pd_enable
 
-    if args.pd_count is not None:
-        config["pydioms"]["count"] = args.pd_count
+        if args.pd_verbose:
+            config["pydioms"]["verbose"] = args.pd_verbose
 
-    if args.pd_length is not None:
-        config["pydioms"]["length"] = args.pd_length
+        if args.pd_count is not None:
+            config["pydioms"]["count"] = args.pd_count
+
+        if args.pd_length is not None:
+            config["pydioms"]["length"] = args.pd_length
 
     if args.template_mode:
         config["pyclones"]["template_mode"] = args.template_mode

@@ -1,7 +1,7 @@
 import ast
-import pathlib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from pyfactoring.utils import extract
 from pyfactoring.utils.pydioms.ast_inspect import (
@@ -12,7 +12,7 @@ from pyfactoring.utils.pydioms.ast_inspect import (
 from pyfactoring.utils.pydioms.ast_types import CountingType
 
 
-def make_prefix_trees(filepaths: Iterable[str | pathlib.Path]) -> list["PrefixTree"]:
+def make_prefix_trees(filepaths: Iterable[str | Path]) -> list["PrefixTree"]:
     prefix_trees = []
     for filepath in filepaths:
         prefix_tree = PrefixTree()
@@ -112,7 +112,7 @@ class PrefixNode:
 
 @dataclass
 class PrefixTree:
-    filepaths: Iterable[str | pathlib.Path] = field(default_factory=list)
+    filepaths: Iterable[str | Path] = field(default_factory=list)
 
     total_operands: int = field(default=0, init=False)
     total_operators: int = field(default=0, init=False)
@@ -127,16 +127,19 @@ class PrefixTree:
         for filepath in self.filepaths:
             self.add_tree(filepath)
 
-    def add_tree(self, filepath: str | pathlib.Path):
+    def add_tree(self, filepath: str | Path):
         module = extract.module(filepath)
-        self.add_ast_obj(module, str(filepath))
+        if isinstance(filepath, str):
+            self.add_ast_obj(module, Path(filepath))
+        else:
+            self.add_ast_obj(module, filepath)
 
     def add_inspected_tree(self, root: ASTInspectedNode):
         self.total_operands += root.total_operands
         self.total_operators += root.total_operators
         self._add_tree(root)
 
-    def add_ast_obj(self, root: ast.AST, filepath: str):
+    def add_ast_obj(self, root: ast.AST, filepath: Path):
         inspected_tree = make_inspected_tree(root, filepath)
         self.add_inspected_tree(inspected_tree)
 

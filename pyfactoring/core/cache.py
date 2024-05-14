@@ -3,13 +3,14 @@ import itertools
 import os
 import pickle
 import shutil
-import time
 from dataclasses import dataclass
 from pathlib import Path
+from time import time
 
 from colorama import Fore, Style
 
 from pyfactoring.utils.pyclones import CodeBlockClone
+from pyfactoring.utils.pydioms.possibleidiom import CodeBlockIdiom, Idiom
 
 
 _CACHE_DIR = Path("./.pyfactoring_cache")
@@ -34,16 +35,12 @@ def hash_file(path: Path) -> bytes:
     return source_hash.digest()
 
 
-# проверяем менялись ли файлы
-# находим те, что не менялись, достаем объекты с помощью пикла
-# из восстановленной коллекции извлекаем только те клоны, которые соответствуют путям
-# остальные файлы отправляем на анализ, а потом все снова пиклим
-# кэшировать с перезаписью в 200 файлов
-# path hash pickle
-
-
-def retrieve_clones(paths: list[Path]) -> tuple[list[dict[str, list[CodeBlockClone]]], list[Path]]:
-    cache_path = _CACHE_DIR / "CACHE"
+def retrieve(
+    paths: list[Path],
+    *,
+    is_idiom: bool = False,
+) -> tuple[list[dict[str | Idiom, list[CodeBlockClone | CodeBlockIdiom]]], list[Path]]:
+    cache_path = _CACHE_DIR / ("IDIOMS" if is_idiom else "CLONES")
 
     if not os.path.exists(cache_path):
         return [], paths
@@ -52,24 +49,26 @@ def retrieve_clones(paths: list[Path]) -> tuple[list[dict[str, list[CodeBlockClo
         caches: list[FileCache] = pickle.load(cache_file)
 
     caches_dumps = {cache.path: (cache.hash, cache.data) for cache in caches}
-    clones = []
+    cached_clones = []
     uncached_paths = []
 
     for path in paths:
         if path in caches_dumps and hash_file(path) == caches_dumps[path][0]:
             clone: dict[str, list[CodeBlockClone]] = caches_dumps[path][1]
-            clones.append(clone)
+            cached_clones.append(clone)
         else:
             uncached_paths.append(path)
 
-    return clones, uncached_paths
+    return cached_clones, uncached_paths
 
 
-def cache_clones(
-        paths: list[Path],
-        clones: list[dict[str, list[CodeBlockClone]]],
+def cache(
+    paths: list[Path],
+    clones: list[dict[str, list[CodeBlockClone]]],
+    *,
+    is_idiom: bool = False,
 ):
-    cache_path = _CACHE_DIR / "CACHE"
+    cache_path = _CACHE_DIR / ("IDIOMS" if is_idiom else "CLONES")
     caches_dumps = {}
 
     if os.path.exists(cache_path):
@@ -104,7 +103,7 @@ def copy_files(single_paths: list[Path], chained_paths: list[Path]):
     recovery_path = _CACHE_DIR / "RECOVERY"
 
     if os.path.exists(head_path):
-        recovery_dir = _CACHE_DIR / str(hex(int(time.time())))
+        recovery_dir = _CACHE_DIR / hex(int(time()))
         os.rename(head_path, recovery_dir)
 
         with open(recovery_path, "r") as recovery_file:
