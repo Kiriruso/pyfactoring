@@ -2,7 +2,7 @@ import shutil
 
 from colorama import Fore, Style
 
-from pyfactoring.core import analysis
+from pyfactoring.core import analysis, cache
 from pyfactoring.settings import common_settings, pyclones_settings
 from pyfactoring.utils.path import separate_filepaths
 
@@ -66,12 +66,17 @@ def action_check():
         common_settings.paths, common_settings.chain, exclude=common_settings.exclude,
     )
 
-    single_clones = analysis.clone(single_paths)
-    chained_clones = analysis.clone(chained_paths, is_chained=True)
-    single_idioms = analysis.idiom(single_paths)
-    chained_idioms = analysis.idiom(chained_paths, is_chained=True)
+    single_clones, uncached_clones = cache.retrieve_clones(single_paths)
+    single_clones.extend(analysis.clone_analysis(uncached_clones))
+
+    chained_clones = analysis.clone_analysis(chained_paths, is_chained=True)
+
+    single_idioms = analysis.idiom_analysis(single_paths)
+    chained_idioms = analysis.idiom_analysis(chained_paths, is_chained=True)
 
     _display_analysis("FINDING CLONES IN SINGLE FILES", single_clones)
     _display_analysis("FINDING CLONES IN CHAINED FILES", chained_clones)
     _display_analysis("FINDING IDIOMS IN SINGLE FILES", single_idioms, is_idiom=True)
     _display_analysis("FINDING IDIOMS IN CHAINED FILES", chained_idioms, is_idiom=True)
+
+    cache.cache_clones(single_paths, single_clones)

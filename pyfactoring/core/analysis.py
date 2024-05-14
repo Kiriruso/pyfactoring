@@ -1,13 +1,13 @@
-import pathlib
 import sys
+from pathlib import Path
 
 from pyfactoring.utils.pyclones import CloneFinder, CodeBlockClone
 from pyfactoring.utils.pydioms import IdiomFinder, prefixtree
 from pyfactoring.utils.pydioms.possibleidiom import CodeBlockIdiom, Idiom
 
 
-def clone(
-        paths: list[pathlib.Path], *, is_chained: bool = False,
+def clone_analysis(
+        paths: list[Path], *, is_chained: bool = False,
 ) -> list[dict[str, list[CodeBlockClone]]] | dict[str, list[CodeBlockClone]]:
     finder = CloneFinder()
     if is_chained:
@@ -16,8 +16,8 @@ def clone(
     return [clones for clones in single if clones]
 
 
-def idiom(
-        paths: list[pathlib.Path], *, is_chained: bool = False,
+def idiom_analysis(
+        paths: list[Path], *, is_chained: bool = False,
 ) -> list[dict[Idiom, list[CodeBlockIdiom]]] | dict[Idiom, list[CodeBlockIdiom]]:
     recursion_limit = sys.getrecursionlimit()
     sys.setrecursionlimit(sys.getrecursionlimit() * 100)
@@ -34,3 +34,22 @@ def idiom(
 
     sys.setrecursionlimit(recursion_limit)
     return idioms
+
+
+def paths_with_clones(
+        clones: list[dict[str, list[CodeBlockClone]]] | dict[str, list[CodeBlockClone]],
+        *,
+        is_chained: bool = False,
+) -> list[Path]:
+    if is_chained:
+        return list({
+            block.file
+            for blocks in clones.values()
+            for block in blocks
+        })
+
+    return list({
+        blocks[0].file
+        for clone in clones
+        for blocks in clone.values()
+    })
