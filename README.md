@@ -197,21 +197,24 @@ chain = []
 chain_all = false
 
 [tool.pyfactoring.pydioms]
+# Activate metric analysis
+enable = false
+
+# Output additional information for metric analysis
+verbose = false
+
 # Minimum number of trees needed to identify them as a clone
 count = 5
 
 # Minimum length of trees for analysis
-length = 10
-
-# Output additional information for metric analysis
-verbose = false
+length = 20
 
 [tool.pyfactoring.pyclones]
 # Minimum number of code fragments to identify as a clone
 count = 2
 
 # Minimum length of code fragments for analysis
-length = 5
+length = 4
 
 # Save code fragment template as "code", also available "tree"
 template_mode = "code"
@@ -226,7 +229,7 @@ Configuration options can also be provided using special command line arguments,
 pyfactoring --template-view --pc-count=5 check --chain-all
 ```
 
-See pyfactoring help for more on Pyfactoring's top-level commands, or pyfactoring help check and pyfactoring help format for more on the linting and formatting commands, respectively.
+See `pyfactoring --help` for more on Pyfactoring's top-level commands, or `pyfactoring check --help` and `pyfactoring format --help` for more on the linting and formatting commands, respectively.
 
 ## Support
 
@@ -236,4 +239,4 @@ You can also ask me for help on [Telegram](https://t.me/kirysha_gaa).
 
 ## License
 
-This repository is licensed under the [MIT License](https://github.com/Kiriruso/pyfactoring/blob/master/LICENSE)
+This repository is licensed under the [MIT License](https://github.com/Kiriruso/pyfactoring/blob/master/LICENSE).

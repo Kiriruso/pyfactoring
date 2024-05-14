@@ -11,7 +11,7 @@ paths = [
 # chain or chain_all option
 # chain_all = true
 chain = [
-    "pyfactoring/pyclones",        # folder
+    "pyfactoring/pyclones",         # folder
     "pyfactoring/core/analysis.py", # file
 ]
 pack_consts = false
@@ -21,9 +21,10 @@ exclude = [
 ]
 
 [tool.pyfactoring.pydioms]
+enable = false
+verbose = false
 count = 5
 length = 20
-verbose = false
 
 [tool.pyfactoring.pyclones]
 count = 2

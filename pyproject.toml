@@ -68,15 +68,16 @@ action = "check"
 diff = false
 workers = 1
 paths = ["."]
-chain = ["pyfactoring/pyclones"]
+chain = []
 chain_all = false
 pack_consts = false
-exclude = ["test"]
+exclude = []
 
 [tool.pyfactoring.pydioms]
+enable = false
+verbose = false
 count = 5
 length = 20
-verbose = false
 
 [tool.pyfactoring.pyclones]
 count = 2
