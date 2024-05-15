@@ -205,12 +205,16 @@ class Templater(ast.NodeTransformer):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
         with self.scope():
+            node.name = "__function__"
+            node.args = self.visit(node.args)
+
             for decorator in node.decorator_list:
                 if isinstance(decorator, ast.Call):
                     self._templatize(decorator)
+
             with self.scope():
-                node.args = self.visit(node.args)
                 node.body = self._templatize(node.body)
+
         return node
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AST:

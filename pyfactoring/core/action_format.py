@@ -29,23 +29,28 @@ def _write_sources(sources: dict[Path, list[str]]):
 
 
 def _insert_function_call(sources: dict[Path, list[str]], block: CodeBlockClone, func: TemplatedFunc):
+    shift = int(not func.in_func)
     params = itertools.chain(block.vars, block.consts)
     call = func.call(params)
-    sources[block.file][block.lineno - 1] = f"{call}\n"
+
+    line = sources[block.file][block.lineno - shift]
+    indent = " " * (len(line) - len(line.lstrip()))
+    sources[block.file][block.lineno - shift] = f"{indent}{call}\n"
 
     print(f"{block.file}:0: {Fore.GREEN}Formatted:{Style.RESET_ALL} clone replaced by call {call}")
 
 
 def _remove_remaining_clone_parts(
-        sources: dict[Path, list[str]], blocks: list[CodeBlockClone],
+        sources: dict[Path, list[str]], blocks: list[CodeBlockClone], in_func: bool,
 ) -> dict[Path, list[str]]:
+    shift = int(in_func)
     ends: dict[Path, int] = defaultdict(int)
     cleared_sources: dict[Path, list[str]] = defaultdict(list)
 
     for block in blocks:
         source = sources[block.file]
         cleared_sources[block.file].extend(
-            source[ends[block.file]:block.lineno],
+            source[ends[block.file]:block.lineno + shift],
         )
         ends[block.file] = block.end_lineno
 
@@ -61,7 +66,7 @@ def _replace_clones_with_calls(
     for block in blocks:
         _insert_function_call(sources, block, func)
 
-    return _remove_remaining_clone_parts(sources, blocks)
+    return _remove_remaining_clone_parts(sources, blocks, func.in_func)
 
 
 def _find_lineno_after_imports(lines: list[str]) -> int:
@@ -140,9 +145,9 @@ def action_format():
         common_settings.paths, common_settings.chain, exclude=common_settings.exclude,
     )
 
-    if not common_settings.force:
-        single_paths = cache.format_retrieve(single_paths)
-        chained_paths = cache.format_retrieve(chained_paths, is_chained=True)
+    # if not common_settings.force:
+    #     single_paths = cache.format_retrieve(single_paths)
+    #     chained_paths = cache.format_retrieve(chained_paths, is_chained=True)
 
     if not (single_paths or chained_paths):
         print(f"{Fore.RED}Nothing to format{Style.RESET_ALL}")
@@ -152,8 +157,8 @@ def action_format():
 
     if single_paths:
         format_files(single_paths)
-        cache.format_cache(single_paths)
+        # cache.format_cache(single_paths)
 
     if chained_paths:
         format_files(chained_paths, is_chained=True)
-        cache.format_cache(chained_paths, is_chained=True)
+        # cache.format_cache(chained_paths, is_chained=True)
