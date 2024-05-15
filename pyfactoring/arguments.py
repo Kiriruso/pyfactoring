@@ -71,6 +71,11 @@ format_parser.add_argument(
     action="store_true",
     help="displays the differences between the changes made and the source",
 )
+format_parser.add_argument(
+    "--force",
+    action="store_true",
+    help="format files even if they have been formatted before",
+)
 restore_parser = action_subparser.add_parser(
     name="restore",
     prog="pyfactoring",

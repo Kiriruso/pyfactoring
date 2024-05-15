@@ -35,12 +35,52 @@ def hash_file(path: Path) -> bytes:
     return source_hash.digest()
 
 
-def retrieve(
+def format_retrieve(paths: list[Path], *, is_chained: bool = False) -> list[Path]:
+    suffix = "chained" if is_chained else "single"
+    cache_path = _CACHE_DIR / f".format.{suffix}"
+
+    if not os.path.exists(cache_path):
+        return paths
+
+    with open(cache_path, "rb") as cache_file:
+        caches: dict[Path, bytes] = pickle.load(cache_file)
+
+    if is_chained:
+        for path in paths:
+            if hash_file(path) != caches.get(path):
+                return paths
+        return []
+    else:
+        return [
+            path
+            for path in paths
+            if hash_file(path) != caches.get(path)
+        ]
+
+
+def format_cache(paths: list[Path], *, is_chained: bool = False):
+    suffix = "chained" if is_chained else "single"
+    cache_path = _CACHE_DIR / f".format.{suffix}"
+    caches: dict[Path, bytes] = {}
+
+    if os.path.exists(cache_path):
+        with open(cache_path, "rb") as cache_file:
+            caches = pickle.load(cache_file)
+
+    for path in paths:
+        caches[path] = hash_file(path)
+
+    with open(cache_path, "wb") as cache_file:
+        pickle.dump(caches, cache_file)
+
+
+def check_retrieve(
     paths: list[Path],
     *,
     is_idiom: bool = False,
 ) -> tuple[list[dict[str | Idiom, list[CodeBlockClone | CodeBlockIdiom]]], list[Path]]:
-    cache_path = _CACHE_DIR / ("IDIOMS" if is_idiom else "CLONES")
+    suffix = "idioms" if is_idiom else "clones"
+    cache_path = _CACHE_DIR / f".check.{suffix}"
 
     if not os.path.exists(cache_path):
         return [], paths
@@ -62,13 +102,14 @@ def retrieve(
     return cached_clones, uncached_paths
 
 
-def cache(
+def check_cache(
     paths: list[Path],
     clones: list[dict[str, list[CodeBlockClone]]],
     *,
     is_idiom: bool = False,
 ):
-    cache_path = _CACHE_DIR / ("IDIOMS" if is_idiom else "CLONES")
+    suffix = "idioms" if is_idiom else "clones"
+    cache_path = _CACHE_DIR / f".check.{suffix}"
     caches_dumps = {}
 
     if os.path.exists(cache_path):

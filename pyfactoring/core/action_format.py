@@ -140,7 +140,20 @@ def action_format():
         common_settings.paths, common_settings.chain, exclude=common_settings.exclude,
     )
 
+    if not common_settings.force:
+        single_paths = cache.format_retrieve(single_paths)
+        chained_paths = cache.format_retrieve(chained_paths, is_chained=True)
+
+    if not (single_paths or chained_paths):
+        print(f"{Fore.RED}Nothing to format{Style.RESET_ALL}")
+        return
+
     cache.copy_files(single_paths, chained_paths)
 
-    format_files(single_paths)
-    format_files(chained_paths, is_chained=True)
+    if single_paths:
+        format_files(single_paths)
+        cache.format_cache(single_paths)
+
+    if chained_paths:
+        format_files(chained_paths, is_chained=True)
+        cache.format_cache(chained_paths, is_chained=True)

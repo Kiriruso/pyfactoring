@@ -12,9 +12,10 @@ from pyfactoring.exceptions import OptionsConflictError
 class CommonSettings(BaseSettings):
     action: Annotated[Literal["check", "format", "restore"], Field(default="check")]
     paths: Annotated[list[str], Field(default=["."])]
-    pack_consts: Annotated[bool, Field(default=False)]
 
+    pack_consts: Annotated[bool, Field(default=False)]
     diff: Annotated[bool, Field(default=False)]
+    force: Annotated[bool, Field(default=False)]
     workers: Annotated[int, Field(ge=1, default=1)]
     exclude: Annotated[list[str], Field(default_factory=list)]
     chain: Annotated[list[str], Field(default_factory=list)]
@@ -74,7 +75,9 @@ def _assign_arguments(config: dict):  # noqa: PLR0912
             if args.pack_consts:
                 config["common"]["pack_consts"] = args.pack_consts
             if args.diff:
-                config["common"]["diff"] = True
+                config["common"]["diff"] = args.diff
+            if args.force:
+                config["common"]["force"] = args.force
 
         config["common"]["paths"] = (
             args.paths.split()
