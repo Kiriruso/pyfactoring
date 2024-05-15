@@ -1,6 +1,7 @@
 [tool.pyfactoring]
 action = "check" # or "format", "restore"
 diff = false
+force = false
 workers = 1
 paths = [
     "pyfactoring/core",                         # folder

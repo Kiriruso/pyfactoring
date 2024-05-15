@@ -159,6 +159,9 @@ action = "check"
 # Show difference rather than format files
 diff = false
 
+# Format files even if they have been formatted before
+force = false
+
 # Number of workers for file analysis
 workers = 1
 

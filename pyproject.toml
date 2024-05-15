@@ -66,6 +66,7 @@ indent-style = "space"
 [tool.pyfactoring]
 action = "check"
 diff = false
+force = false
 workers = 1
 paths = ["."]
 chain = []
