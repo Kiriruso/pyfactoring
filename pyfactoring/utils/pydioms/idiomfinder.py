@@ -76,7 +76,6 @@ class IdiomFinder:
             print(f"filtered: {len(filtered_idioms):>3}")
             print()
 
-        # todo: разобраться с доп. фильтрацией
         sorted_idioms = sorted(filtered_idioms.items(), key=lambda p: -1 * p[1].efficiency)
         i = 0
         while i < len(sorted_idioms) - 1:
