@@ -1,4 +1,3 @@
-import itertools
 from collections import defaultdict
 from pathlib import Path
 
@@ -30,8 +29,7 @@ def _write_sources(sources: dict[Path, list[str]]):
 
 def _insert_function_call(sources: dict[Path, list[str]], block: CodeBlockClone, func: TemplatedFunc):
     shift = int(not func.in_func)
-    params = itertools.chain(block.vars, block.consts)
-    call = func.call(params)
+    call = func.call(block)
 
     line = sources[block.file][block.lineno - shift]
     indent = " " * (len(line) - len(line.lstrip()))
@@ -69,14 +67,21 @@ def _replace_clones_with_calls(
     return _remove_remaining_clone_parts(sources, blocks, func.in_func)
 
 
+def _find_lineno_after_class_name(name: str, lines: list[str]) -> int:
+    lineno_after_name = 0
+    for lineno, line in enumerate(lines):
+        if name in line:
+            lineno_after_name = lineno + 1
+            break
+    return lineno_after_name
+
+
 def _find_lineno_after_imports(lines: list[str]) -> int:
     lineno_after_imports = 0
-
     for lineno, line in enumerate(lines):
         if "import" not in line:
             lineno_after_imports = lineno
             break
-
     return lineno_after_imports
 
 
@@ -91,12 +96,23 @@ def _insert_func_def_or_import(
         if block.file in changed_sources:
             continue
 
-        end_lineno_imps = _find_lineno_after_imports(sources[block.file])
-        source = sources[block.file][:end_lineno_imps]
+        end_lineno = (
+            _find_lineno_after_class_name(block.in_class, sources[block.file])
+            if block.in_class else
+            _find_lineno_after_imports(sources[block.file])
+        )
+        source = sources[block.file][:end_lineno]
 
         print(f"{block.file}:{len(source)}: {Fore.GREEN}Formatted: {Style.RESET_ALL}", end='')
-        if block.file == main_file:
-            if end_lineno_imps > 0:
+
+        if block.in_class:
+            line = source[-1]
+            indent = " " * (len(line) - len(line.lstrip()) + 4)
+            definition = indent.join(func.definition.splitlines(keepends=True))
+            source.append(f"{indent}{definition}\n\n")
+            print(f"define {func.name} in class {block.in_class}")
+        elif block.file == main_file:
+            if end_lineno > 0:
                 source.append("\n\n")
             source.append(f"{func.definition}\n\n")
             print(f"define {func.name}")
@@ -104,7 +120,7 @@ def _insert_func_def_or_import(
             source.append(f"{func.import_from(main_file)}\n")
             print(f"import {func.name}")
 
-        source.extend(sources[block.file][end_lineno_imps:])
+        source.extend(sources[block.file][end_lineno:])
         changed_sources[block.file] = source
 
     return changed_sources

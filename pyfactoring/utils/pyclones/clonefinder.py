@@ -19,6 +19,7 @@ class CodeBlockClone:
     end_lineno: int
     colno: int
     end_colno: int
+    in_class: str = field(init=False, default=None)
     vars: list[str] = field(init=False, default_factory=list)
     consts: list[str] = field(init=False, default_factory=list)
 
@@ -46,6 +47,7 @@ class CloneFinder:
                 "Try",
                 "TryStar",
                 "Match",
+                "ClassDef",
             )
         else:
             self.allowed_nodes: tuple[str] = tuple(self.allowed_nodes)
@@ -61,6 +63,11 @@ class CloneFinder:
             if not self._is_allowed_node(node):
                 continue
 
+            if isinstance(node, ast.ClassDef):
+                for stmt in node.body:
+                    stmt.in_class = node.name
+                continue
+
             if node.end_lineno - node.lineno < pyclones_settings.length:
                 continue
 
@@ -73,10 +80,12 @@ class CloneFinder:
 
             to_template = copy.deepcopy(node)
             template = self._get_source(self.templater.visit(to_template))
-            del to_template
 
+            clone.in_class = to_template.in_class if hasattr(to_template, "in_class") else None
             clone.vars, clone.consts = self.templater.pop_unique_operands()
             clones[template].append(clone)
+
+            del to_template
 
         if unfiltered:
             return clones

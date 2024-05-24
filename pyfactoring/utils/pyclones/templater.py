@@ -258,7 +258,7 @@ class Templater(ast.NodeTransformer):
 
         return node
 
-    def visit_TryStar(self, node: ast.TryStar) -> ast.AST:
+    def visit_TryStar(self, node: ast.TryStar) -> ast.AST:  # noqa
         return self.visit_Try(node)
 
     def visit_ExceptHandler(self, node: ast.ExceptHandler) -> ast.AST:
@@ -269,7 +269,7 @@ class Templater(ast.NodeTransformer):
                 node.body = self._templatize(node.body)
         return node
 
-    def visit_Match(self, node: ast.Match) -> ast.AST:
+    def visit_Match(self, node: ast.Match) -> ast.AST:  # noqa
         with self.scope():
             node.subject = self._templatize(node.subject)
             node.cases = self._templatize(node.cases)
@@ -286,43 +286,43 @@ class Templater(ast.NodeTransformer):
 
         return node
 
-    def visit_MatchValue(self, node: ast.MatchValue) -> ast.AST:
+    def visit_MatchValue(self, node: ast.MatchValue) -> ast.AST:  # noqa
         node.value = self._templatize(node.value)
         return node
 
-    def visit_MatchSingleton(self, node: ast.MatchSingleton) -> ast.AST:
+    def visit_MatchSingleton(self, node: ast.MatchSingleton) -> ast.AST:  # noqa
         node.value = self._scope.get_const(node.value)
         return node
 
-    def visit_MatchStar(self, node: ast.MatchStar) -> ast.AST:
+    def visit_MatchStar(self, node: ast.MatchStar) -> ast.AST:  # noqa
         if node.name:
             node.name = self._scope.get_name(node.name)
         return node
 
-    def visit_MatchSequence(self, node: ast.MatchSequence) -> ast.AST:
+    def visit_MatchSequence(self, node: ast.MatchSequence) -> ast.AST:  # noqa
         node.patterns = self._templatize(node.patterns)
         return node
 
-    def visit_MatchMapping(self, node: ast.MatchMapping) -> ast.AST:
+    def visit_MatchMapping(self, node: ast.MatchMapping) -> ast.AST:  # noqa
         node.keys = self._templatize(node.keys)
         node.patterns = self._templatize(node.patterns)
         if node.rest:
             node.rest = self._scope.get_name(node.rest)
         return node
 
-    def visit_MatchClass(self, node: ast.MatchClass) -> ast.AST:
+    def visit_MatchClass(self, node: ast.MatchClass) -> ast.AST:  # noqa
         node.patterns = self._templatize(node.patterns)
         node.kwd_patterns = self._templatize(node.kwd_patterns)
         return node
 
-    def visit_MatchAs(self, node: ast.MatchAs) -> ast.AST:
+    def visit_MatchAs(self, node: ast.MatchAs) -> ast.AST:  # noqa
         if node.name:
             node.name = self._scope.get_name(node.name)
         if node.pattern:
             node.pattern = self._templatize(node.pattern)
         return node
 
-    def visit_MatchOr(self, node: ast.MatchOr) -> ast.AST:
+    def visit_MatchOr(self, node: ast.MatchOr) -> ast.AST:  # noqa
         node.patterns = self._templatize(node.patterns)
         return node
 
@@ -392,7 +392,10 @@ class Templater(ast.NodeTransformer):
                 node.arg = self._scope.get_name(node.arg)
             case ast.Constant:
                 if str(node.value) not in self._unique_consts:
-                    self._unique_consts.append(str(node.value))
+                    if isinstance(node.value, str):
+                        self._unique_consts.append(f"\"{node.value}\"")
+                    else:
+                        self._unique_consts.append(str(node.value))
                 node.value = self._scope.get_const(node.value)
             case ast.Tuple | ast.List | ast.Set:
                 node.elts = self.visit_collection(node.elts)

@@ -1,6 +1,4 @@
 class Scope:
-    COMMON_KEYWORDS = ("self", "cls", "_")
-
     def __init__(self, outer: "Scope" = None, *, global_: bool = False):
         self.is_local: bool = False
         self.is_global: bool = global_
@@ -49,7 +47,7 @@ class Scope:
         self._imports.clear()
 
     def get_name(self, id_: str) -> str:
-        if id_ in self.COMMON_KEYWORDS or id_ in self._imports:
+        if id_ == "_" or id_ in self._imports:
             return id_
 
         if not self.is_global and id_ in self._locals.values():

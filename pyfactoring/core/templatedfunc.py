@@ -3,6 +3,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from pyfactoring import CodeBlockClone
 from pyfactoring.settings import common_settings
 
 
@@ -13,10 +14,14 @@ class TemplatedFunc:
     is_async: bool
     in_func: bool
 
-    def call(self, params: list[str]) -> str:
-        awaitable = "await " if self.is_async else ""
-        params = ", ".join(params)
-        return f"{awaitable}{self.name}({params})"
+    def call(self, block: CodeBlockClone) -> str:
+        await_word = "await " if self.is_async else ""
+        self_word = ""
+        if block.in_class:
+            self_word = "self."
+            block.vars.remove("self")
+        params = ", ".join(itertools.chain(block.vars, block.consts))
+        return f"{await_word}{self_word}{self.name}({params})"
 
     def import_from(self, path: Path) -> str:
         module = ".".join(path.parts)
@@ -29,11 +34,10 @@ class TemplatedFunc:
         func_template = "# Pyfactoring: rename this!\n{} {}({}):\n{}"
 
         is_func = "__function__" in template
-        is_async = "async" in template or "await" in template
+        is_async = bool(re.search(r"(?<=[= ])await(?= )|async def", template))
         prefix_def = "async def" if is_async else "def"
 
         variables = sorted(set(re.findall(r"__var_\d+__", template)))
-
         if common_settings.pack_consts:
             params = ", ".join(variables)
             params = f"{params}, *consts"

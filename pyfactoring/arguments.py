@@ -46,6 +46,11 @@ def _create_base_action_parser(subparser, action: str, is_default: bool = False)
         metavar="<dir/file name>,",
         help="excludes on the given files or directories",
     )
+    _action_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="format files even if they have been formatted before",
+    )
 
     return _action_parser
 
@@ -70,11 +75,6 @@ format_parser.add_argument(
     "--diff",
     action="store_true",
     help="displays the differences between the changes made and the source",
-)
-format_parser.add_argument(
-    "--force",
-    action="store_true",
-    help="format files even if they have been formatted before",
 )
 restore_parser = action_subparser.add_parser(
     name="restore",
