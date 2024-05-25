@@ -71,11 +71,6 @@ format_parser.add_argument(
     action="store_true",
     help="when generating a function, all constants are packed into '*consts'",
 )
-format_parser.add_argument(
-    "--diff",
-    action="store_true",
-    help="displays the differences between the changes made and the source",
-)
 restore_parser = action_subparser.add_parser(
     name="restore",
     prog="pyfactoring",

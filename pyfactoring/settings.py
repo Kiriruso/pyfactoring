@@ -73,9 +73,7 @@ def _assign_arguments(config: dict):  # noqa: PLR0912
 
         if args.action == "format":
             if args.pack_consts:
-                config["common"]["pack_consts"] = args.pack_consts
-            if args.diff:
-                config["common"]["diff"] = args.diff
+                config["common"]["pack_consts"] = args.pack_const
 
         if args.force:
             config["common"]["force"] = args.force
