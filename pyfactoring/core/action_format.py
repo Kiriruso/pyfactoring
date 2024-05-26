@@ -12,12 +12,10 @@ from pyfactoring.utils.pyclones import CodeBlockClone
 
 def _read_sources(blocks: list[CodeBlockClone]) -> dict[Path, list[str]]:
     sources: dict[Path, list[str]] = defaultdict(list)
-
     for block in blocks:
         if block.file not in sources:
             with open(block.file, "r", encoding="utf-8") as source_file:
                 sources[block.file] = source_file.readlines()
-
     return sources
 
 
@@ -30,11 +28,9 @@ def _write_sources(sources: dict[Path, list[str]]):
 def _insert_function_call(sources: dict[Path, list[str]], block: CodeBlockClone, func: TemplatedFunc):
     shift = int(not func.in_func)
     call = func.call(block)
-
     line = sources[block.file][block.lineno - shift]
     indent = " " * (len(line) - len(line.lstrip()))
     sources[block.file][block.lineno - shift] = f"{indent}{call}\n"
-
     print(f"{block.file}:0: {Fore.GREEN}Formatted:{Style.RESET_ALL} clone replaced by call {call}")
 
 
@@ -63,7 +59,6 @@ def _replace_clones_with_calls(
 ) -> dict[Path, list[str]]:
     for block in blocks:
         _insert_function_call(sources, block, func)
-
     return _remove_remaining_clone_parts(sources, blocks, func.in_func)
 
 

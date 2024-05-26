@@ -16,7 +16,6 @@ class CommonSettings(BaseSettings):
     pack_consts: Annotated[bool, Field(default=False)]
     diff: Annotated[bool, Field(default=False)]
     force: Annotated[bool, Field(default=False)]
-    workers: Annotated[int, Field(ge=1, default=1)]
     exclude: Annotated[list[str], Field(default_factory=list)]
     chain: Annotated[list[str], Field(default_factory=list)]
     chain_all: Annotated[bool, Field(default=False)]
@@ -96,9 +95,6 @@ def _assign_arguments(config: dict):  # noqa: PLR0912
 
         if args.exclude:
             config["common"]["exclude"] = args.exclude
-
-    if args.workers is not None:
-        config["common"]["workers"] = args.workers
 
     if args.pd_enable:
         config["pydioms"]["enable"] = args.pd_enable

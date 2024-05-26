@@ -79,16 +79,6 @@ restore_parser = action_subparser.add_parser(
     formatter_class=_SubcommandHelpFormatter,
 )
 
-# === COMMON OPTIONS === #
-general_options = parser.add_argument_group("general options")
-general_options.add_argument(
-    "--workers",
-    type=int,
-    default=1,
-    metavar="<count>",
-    help="changes the number of workers processing files [default: 1]",
-)
-
 # === SPECIFIC OPTIONS === #
 pydioms_group = parser.add_argument_group("pydioms options")
 pydioms_group.add_argument(
