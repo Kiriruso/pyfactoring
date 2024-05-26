@@ -1,8 +1,6 @@
 [tool.pyfactoring]
 action = "check" # or "format", "restore"
-diff = false
-force = false
-workers = 1
+no_cache = false
 paths = [
     "pyfactoring/core",                         # folder
     "pyfactoring/utils/pyclones",               # folder

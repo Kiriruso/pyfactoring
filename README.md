@@ -156,14 +156,8 @@ If left unspecified, Pyfactoring's default configuration is equivalent to the fo
 # Default command, also possible: "format", "restore"
 action = "check"
 
-# Show difference rather than format files
-diff = false
-
-# Format files even if they have been formatted before
-force = false
-
-# Number of workers for file analysis
-workers = 1
+# Disables caching for the command and forces it to be executed from scratch
+no_cache = false
 
 # When defining a function, pack constants into *consts
 pack_consts = false
