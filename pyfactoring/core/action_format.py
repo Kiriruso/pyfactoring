@@ -93,20 +93,20 @@ def _insert_func_def_or_import(
             continue
 
         end_lineno = (
-            _find_lineno_after_class_name(block.in_class, sources[block.file])
-            if block.in_class else
+            _find_lineno_after_class_name(block.class_name, sources[block.file])
+            if block.class_name else
             _find_lineno_after_imports(sources[block.file])
         )
         source = sources[block.file][:end_lineno]
 
         print(f"{block.file}:{len(source)}: {Fore.GREEN}Formatted: {Style.RESET_ALL}", end='')
 
-        if block.in_class:
+        if block.class_name:
             line = source[-1]
             indent = " " * (len(line) - len(line.lstrip()) + 4)
             definition = indent.join(func.definition.splitlines(keepends=True))
             source.append(f"{indent}{definition}\n\n")
-            print(f"define {func.name} in class {block.in_class}")
+            print(f"define {func.name} in class {block.class_name}")
         elif block.file == main_file:
             if end_lineno > 0:
                 source.append("\n\n")
@@ -159,21 +159,22 @@ def action_format():
         )
     except FileOrDirNotFoundError as e:
         print(e.text)
-    else:
-        if not common_settings.no_cache:
-            single_paths = cache.format_retrieve(single_paths)
-            chained_paths = cache.format_retrieve(chained_paths, is_chained=True)
+        return
 
-        if not (single_paths or chained_paths):
-            print(f"{Fore.RED}Nothing to format{Style.RESET_ALL}")
-            return
+    if not common_settings.no_cache:
+        single_paths = cache.format_retrieve(single_paths)
+        chained_paths = cache.format_retrieve(chained_paths, is_chained=True)
 
-        cache.copy_files(single_paths, chained_paths)
+    if not (single_paths or chained_paths):
+        print(f"{Fore.RED}Nothing to format{Style.RESET_ALL}")
+        return
 
-        if single_paths:
-            format_files(single_paths)
-            cache.format_cache(single_paths)
+    cache.store(single_paths, chained_paths)
 
-        if chained_paths:
-            format_files(chained_paths, is_chained=True)
-            cache.format_cache(chained_paths, is_chained=True)
+    if single_paths:
+        format_files(single_paths)
+        cache.format_cache(single_paths)
+
+    if chained_paths:
+        format_files(chained_paths, is_chained=True)
+        cache.format_cache(chained_paths, is_chained=True)

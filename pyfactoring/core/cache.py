@@ -35,6 +35,22 @@ def hash_file(path: Path) -> bytes:
     return source_hash.digest()
 
 
+def format_cache(paths: list[Path], *, is_chained: bool = False):
+    suffix = "chained" if is_chained else "single"
+    cache_path = _CACHE_DIR / f".format.{suffix}"
+    caches: dict[Path, bytes] = {}
+
+    if os.path.exists(cache_path):
+        with open(cache_path, "rb") as cache_file:
+            caches = pickle.load(cache_file)
+
+    for path in paths:
+        caches[path] = hash_file(path)
+
+    with open(cache_path, "wb") as cache_file:
+        pickle.dump(caches, cache_file)
+
+
 def format_retrieve(paths: list[Path], *, is_chained: bool = False) -> list[Path]:
     suffix = "chained" if is_chained else "single"
     cache_path = _CACHE_DIR / f".format.{suffix}"
@@ -56,50 +72,6 @@ def format_retrieve(paths: list[Path], *, is_chained: bool = False) -> list[Path
             for path in paths
             if hash_file(path) != caches.get(path)
         ]
-
-
-def format_cache(paths: list[Path], *, is_chained: bool = False):
-    suffix = "chained" if is_chained else "single"
-    cache_path = _CACHE_DIR / f".format.{suffix}"
-    caches: dict[Path, bytes] = {}
-
-    if os.path.exists(cache_path):
-        with open(cache_path, "rb") as cache_file:
-            caches = pickle.load(cache_file)
-
-    for path in paths:
-        caches[path] = hash_file(path)
-
-    with open(cache_path, "wb") as cache_file:
-        pickle.dump(caches, cache_file)
-
-
-def check_retrieve(
-    paths: list[Path],
-    *,
-    is_idiom: bool = False,
-) -> tuple[list[dict[str | Idiom, list[CodeBlockClone | CodeBlockIdiom]]], list[Path]]:
-    suffix = "idioms" if is_idiom else "clones"
-    cache_path = _CACHE_DIR / f".check.{suffix}"
-
-    if not os.path.exists(cache_path):
-        return [], paths
-
-    with open(cache_path, "rb") as cache_file:
-        caches: list[FileCache] = pickle.load(cache_file)
-
-    caches_dumps = {cache.path: (cache.hash, cache.data) for cache in caches}
-    cached_clones = []
-    uncached_paths = []
-
-    for path in paths:
-        if path in caches_dumps and hash_file(path) == caches_dumps[path][0]:
-            clone: dict[str, list[CodeBlockClone]] = caches_dumps[path][1]
-            cached_clones.append(clone)
-        else:
-            uncached_paths.append(path)
-
-    return cached_clones, uncached_paths
 
 
 def check_cache(
@@ -138,7 +110,35 @@ def check_cache(
         pickle.dump(caches, cache_file)
 
 
-def copy_files(single_paths: list[Path], chained_paths: list[Path]):
+def check_retrieve(
+    paths: list[Path],
+    *,
+    is_idiom: bool = False,
+) -> tuple[list[dict[str | Idiom, list[CodeBlockClone | CodeBlockIdiom]]], list[Path]]:
+    suffix = "idioms" if is_idiom else "clones"
+    cache_path = _CACHE_DIR / f".check.{suffix}"
+
+    if not os.path.exists(cache_path):
+        return [], paths
+
+    with open(cache_path, "rb") as cache_file:
+        caches: list[FileCache] = pickle.load(cache_file)
+
+    caches_dumps = {cache.path: (cache.hash, cache.data) for cache in caches}
+    cached_clones = []
+    uncached_paths = []
+
+    for path in paths:
+        if path in caches_dumps and hash_file(path) == caches_dumps[path][0]:
+            clone: dict[str, list[CodeBlockClone]] = caches_dumps[path][1]
+            cached_clones.append(clone)
+        else:
+            uncached_paths.append(path)
+
+    return cached_clones, uncached_paths
+
+
+def store(single_paths: list[Path], chained_paths: list[Path]):
     head_path = _CACHE_DIR / "head"
     paths_path = head_path / ".paths"
     recovery_path = _CACHE_DIR / "RECOVERY"

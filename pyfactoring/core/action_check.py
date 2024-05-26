@@ -69,26 +69,27 @@ def action_check():
         )
     except FileOrDirNotFoundError as e:
         print(e.text)
+        return
+
+    if common_settings.no_cache:
+        single_clones = analysis.clone_analysis(single_paths)
     else:
+        single_clones, uncached_clones = cache.check_retrieve(single_paths)
+        single_clones.extend(analysis.clone_analysis(uncached_clones))
+        cache.check_cache(single_paths, single_clones)
+    _display_analysis("FINDING CLONES IN SINGLE FILES", single_clones)
+
+    chained_clones = analysis.clone_analysis(chained_paths, is_chained=True)
+    _display_analysis("FINDING CLONES IN CHAINED FILES", chained_clones)
+
+    if pydioms_settings.enable:
         if common_settings.no_cache:
-            single_clones = analysis.clone_analysis(single_paths)
+            single_idioms = analysis.idiom_analysis(single_paths)
         else:
-            single_clones, uncached_clones = cache.check_retrieve(single_paths)
-            single_clones.extend(analysis.clone_analysis(uncached_clones))
-            cache.check_cache(single_paths, single_clones)
-        _display_analysis("FINDING CLONES IN SINGLE FILES", single_clones)
+            single_idioms, uncached_idioms = cache.check_retrieve(single_paths, is_idiom=True)
+            single_idioms.extend(analysis.idiom_analysis(uncached_idioms))
+            cache.check_cache(single_paths, single_idioms, is_idiom=True)
+        _display_analysis("FINDING IDIOMS IN SINGLE FILES", single_idioms, is_idiom=True)
 
-        chained_clones = analysis.clone_analysis(chained_paths, is_chained=True)
-        _display_analysis("FINDING CLONES IN CHAINED FILES", chained_clones)
-
-        if pydioms_settings.enable:
-            if common_settings.no_cache:
-                single_idioms = analysis.idiom_analysis(single_paths)
-            else:
-                single_idioms, uncached_idioms = cache.check_retrieve(single_paths, is_idiom=True)
-                single_idioms.extend(analysis.idiom_analysis(uncached_idioms))
-                cache.check_cache(single_paths, single_idioms, is_idiom=True)
-            _display_analysis("FINDING IDIOMS IN SINGLE FILES", single_idioms, is_idiom=True)
-
-            chained_idioms = analysis.idiom_analysis(chained_paths, is_chained=True)
-            _display_analysis("FINDING IDIOMS IN CHAINED FILES", chained_idioms, is_idiom=True)
+        chained_idioms = analysis.idiom_analysis(chained_paths, is_chained=True)
+        _display_analysis("FINDING IDIOMS IN CHAINED FILES", chained_idioms, is_idiom=True)

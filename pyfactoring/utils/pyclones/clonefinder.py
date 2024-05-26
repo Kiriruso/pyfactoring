@@ -1,9 +1,9 @@
 import ast
 import copy
-import pathlib
 from collections import defaultdict
 from collections.abc import Collection
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from pyfactoring.settings import pyclones_settings
 from pyfactoring.utils import extract
@@ -12,15 +12,15 @@ from pyfactoring.utils.pyclones.templater import Templater
 
 @dataclass
 class CodeBlockClone:
-    source: str = field(repr=False)
-    file: pathlib.Path
+    file: Path
     lineno: int
     end_lineno: int
     colno: int
     end_colno: int
-    in_class: str = field(init=False, default=None)
-    vars: list[str] = field(init=False, default_factory=list)
-    consts: list[str] = field(init=False, default_factory=list)
+    source: str = field(repr=False, kw_only=True)
+    class_name: str = field(default=None, kw_only=True)
+    vars: list[str] = field(default_factory=list, kw_only=True)
+    consts: list[str] = field(default_factory=list, kw_only=True)
 
     @property
     def link(self) -> str:
@@ -52,10 +52,10 @@ class CloneFinder:
             self.allowed_nodes: tuple[str] = tuple(self.allowed_nodes)
 
     def find_all(
-            self, filepath: pathlib.Path, *, unfiltered: bool = False,
+            self, path: Path, *, unfiltered: bool = False,
     ) -> dict[str, list[CodeBlockClone]]:
         clones: dict[str, list[CodeBlockClone]] = defaultdict(list)
-        module = extract.module(filepath)
+        module = extract.module(path)
         self.templater.update_globals(module)
 
         for node in ast.walk(module):
@@ -64,24 +64,26 @@ class CloneFinder:
 
             if isinstance(node, ast.ClassDef):
                 for stmt in node.body:
-                    stmt.in_class = node.name
+                    stmt.class_name = node.name
                 continue
 
             if node.end_lineno - node.lineno < pyclones_settings.length:
                 continue
 
-            clone = CodeBlockClone(
-                extract.stmt_source(node),
-                filepath,
-                node.lineno, node.end_lineno,
-                node.col_offset, node.end_col_offset,
-            )
-
             to_template = copy.deepcopy(node)
-            template = extract.stmt_source(self.templater.visit(to_template))
+            to_template = self.templater.visit(to_template)
 
-            clone.in_class = to_template.in_class if hasattr(to_template, "in_class") else None
-            clone.vars, clone.consts = self.templater.pop_unique_operands()
+            class_name = to_template.in_class if hasattr(to_template, "class_name") else None
+            variables, consts = self.templater.pop_unique_operands()
+
+            template = extract.stmt_source(to_template)
+            clone = CodeBlockClone(
+                path, node.lineno, node.end_lineno, node.col_offset, node.end_col_offset,
+                source=extract.stmt_source(node),
+                class_name=class_name,
+                vars=variables,
+                consts=consts,
+            )
             clones[template].append(clone)
 
             del to_template
@@ -96,10 +98,10 @@ class CloneFinder:
         }
 
     def chained_find_all(
-            self, filepaths: Collection[pathlib.Path],
+            self, path: Collection[Path],
     ) -> dict[str, list[CodeBlockClone]]:
         clones: dict[str, list[CodeBlockClone]] = {}
-        for filepath in filepaths:
+        for filepath in path:
             current_clones = self.find_all(filepath, unfiltered=True)
             for template, blocks in current_clones.items():
                 if template not in clones.keys():

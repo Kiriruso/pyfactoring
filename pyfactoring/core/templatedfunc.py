@@ -17,7 +17,7 @@ class TemplatedFunc:
     def call(self, block: CodeBlockClone) -> str:
         await_word = "await " if self.is_async else ""
         self_word = ""
-        if block.in_class:
+        if block.class_name:
             self_word = "self."
             block.vars.remove("self")
         params = ", ".join(itertools.chain(block.vars, block.consts))
