@@ -5,7 +5,6 @@ from collections import defaultdict
 from collections.abc import Collection
 from dataclasses import dataclass, field
 
-from pyfactoring.exceptions import UndefinedModeError
 from pyfactoring.settings import pyclones_settings
 from pyfactoring.utils import extract
 from pyfactoring.utils.pyclones.templater import Templater
@@ -72,14 +71,14 @@ class CloneFinder:
                 continue
 
             clone = CodeBlockClone(
-                self._get_source(node),
+                extract.stmt_source(node),
                 filepath,
                 node.lineno, node.end_lineno,
                 node.col_offset, node.end_col_offset,
             )
 
             to_template = copy.deepcopy(node)
-            template = self._get_source(self.templater.visit(to_template))
+            template = extract.stmt_source(self.templater.visit(to_template))
 
             clone.in_class = to_template.in_class if hasattr(to_template, "in_class") else None
             clone.vars, clone.consts = self.templater.pop_unique_operands()
@@ -116,16 +115,3 @@ class CloneFinder:
 
     def _is_allowed_node(self, node: ast.AST):
         return type(node).__name__ in self.allowed_nodes
-
-    @staticmethod
-    def _get_source(node: ast.AST) -> str:
-        match pyclones_settings.template_mode:
-            case "code":
-                return ast.unparse(node)
-            case "tree":
-                return ast.dump(node, indent=4)
-            case _:
-                raise UndefinedModeError(
-                    f"Template extraction mode is not specified or is incorrect: "
-                    f"{pyclones_settings.template_mode}",
-                )

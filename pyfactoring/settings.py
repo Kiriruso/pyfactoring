@@ -1,8 +1,9 @@
 import os
+import sys
 import tomllib
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from pyfactoring.arguments import args
@@ -15,7 +16,7 @@ class CommonSettings(BaseSettings):
 
     pack_consts: Annotated[bool, Field(default=False)]
     diff: Annotated[bool, Field(default=False)]
-    force: Annotated[bool, Field(default=False)]
+    no_cache: Annotated[bool, Field(default=False)]
     exclude: Annotated[list[str], Field(default_factory=list)]
     chain: Annotated[list[str], Field(default_factory=list)]
     chain_all: Annotated[bool, Field(default=False)]
@@ -74,8 +75,8 @@ def _assign_arguments(config: dict):  # noqa: PLR0912
             if args.pack_consts:
                 config["common"]["pack_consts"] = args.pack_const
 
-        if args.force:
-            config["common"]["force"] = args.force
+        if args.no_cache:
+            config["common"]["no_cache"] = args.no_cache
 
         config["common"]["paths"] = (
             args.paths.split()
@@ -122,8 +123,13 @@ def _assign_arguments(config: dict):  # noqa: PLR0912
 
 
 _config = _load_config()
-_assign_arguments(_config)
 
-common_settings: CommonSettings = CommonSettings(**_config.get("common"))
-pydioms_settings: PydiomsSettings = PydiomsSettings(**_config.get("pydioms"))
-pyclones_settings: PyclonesSettings = PyclonesSettings(**_config.get("pyclones"))
+try:
+    _assign_arguments(_config)
+
+    common_settings: CommonSettings = CommonSettings(**_config.get("common"))
+    pydioms_settings: PydiomsSettings = PydiomsSettings(**_config.get("pydioms"))
+    pyclones_settings: PyclonesSettings = PyclonesSettings(**_config.get("pyclones"))
+except (ValidationError, OptionsConflictError) as e:
+    print(e)
+    sys.exit()

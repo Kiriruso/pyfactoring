@@ -47,9 +47,9 @@ def _create_base_action_parser(subparser, action: str, is_default: bool = False)
         help="excludes on the given files or directories",
     )
     _action_parser.add_argument(
-        "--force",
+        "--no-cache",
         action="store_true",
-        help="format files even if they have been formatted before",
+        help="disables caching for the command and forces it to be executed from scratch",
     )
 
     return _action_parser

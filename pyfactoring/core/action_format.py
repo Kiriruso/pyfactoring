@@ -5,6 +5,7 @@ from colorama import Fore, Style
 
 from pyfactoring.core import analysis, cache
 from pyfactoring.core.templatedfunc import TemplatedFunc
+from pyfactoring.exceptions import FileOrDirNotFoundError
 from pyfactoring.settings import common_settings
 from pyfactoring.utils.path import separate_filepaths
 from pyfactoring.utils.pyclones import CodeBlockClone
@@ -152,24 +153,27 @@ def format_files(paths: list[Path], *, is_chained: bool = False):
 
 
 def action_format():
-    single_paths, chained_paths = separate_filepaths(
-        common_settings.paths, common_settings.chain, exclude=common_settings.exclude,
-    )
+    try:
+        single_paths, chained_paths = separate_filepaths(
+            common_settings.paths, common_settings.chain, exclude=common_settings.exclude,
+        )
+    except FileOrDirNotFoundError as e:
+        print(e.text)
+    else:
+        if not common_settings.no_cache:
+            single_paths = cache.format_retrieve(single_paths)
+            chained_paths = cache.format_retrieve(chained_paths, is_chained=True)
 
-    if not common_settings.force:
-        single_paths = cache.format_retrieve(single_paths)
-        chained_paths = cache.format_retrieve(chained_paths, is_chained=True)
+        if not (single_paths or chained_paths):
+            print(f"{Fore.RED}Nothing to format{Style.RESET_ALL}")
+            return
 
-    if not (single_paths or chained_paths):
-        print(f"{Fore.RED}Nothing to format{Style.RESET_ALL}")
-        return
+        cache.copy_files(single_paths, chained_paths)
 
-    cache.copy_files(single_paths, chained_paths)
+        if single_paths:
+            format_files(single_paths)
+            cache.format_cache(single_paths)
 
-    if single_paths:
-        format_files(single_paths)
-        cache.format_cache(single_paths)
-
-    if chained_paths:
-        format_files(chained_paths, is_chained=True)
-        cache.format_cache(chained_paths, is_chained=True)
+        if chained_paths:
+            format_files(chained_paths, is_chained=True)
+            cache.format_cache(chained_paths, is_chained=True)
