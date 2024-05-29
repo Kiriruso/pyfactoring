@@ -31,5 +31,4 @@ def module(filepath: Path) -> ast.Module:
         return ast.parse(file_source(filepath))
     except (SyntaxError, AttributeError):
         print(f"{filepath}:0: {Fore.RED}The file with the error was skipped{Style.RESET_ALL}")
-    finally:
         return ast.parse("# Nothing")

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pyfactoring.utils.pyclones import CloneFinder, CodeBlockClone
 from pyfactoring.utils.pydioms import IdiomFinder, prefixtree
-from pyfactoring.utils.pydioms.possibleidiom import CodeBlockIdiom, Idiom
+from pyfactoring.utils.pydioms.idiom import CodeBlockIdiom, Idiom
 
 
 def clone_analysis(

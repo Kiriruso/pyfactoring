@@ -73,7 +73,7 @@ class CloneFinder:
             to_template = copy.deepcopy(node)
             to_template = self.templater.visit(to_template)
 
-            class_name = to_template.in_class if hasattr(to_template, "class_name") else None
+            class_name = to_template.class_name if hasattr(to_template, "class_name") else None
             variables, consts = self.templater.pop_unique_operands()
 
             template = extract.stmt_source(to_template)

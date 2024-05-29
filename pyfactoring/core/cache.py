@@ -10,7 +10,7 @@ from time import time
 from colorama import Fore, Style
 
 from pyfactoring.utils.pyclones import CodeBlockClone
-from pyfactoring.utils.pydioms.possibleidiom import CodeBlockIdiom, Idiom
+from pyfactoring.utils.pydioms.idiom import CodeBlockIdiom, Idiom
 
 
 _CACHE_DIR = Path("./.pyfactoring_cache")

@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from pyfactoring.settings import pydioms_settings
 from pyfactoring.utils.pydioms.ast_types import AST_TOTAL_UNIQUE_OPERATORS, CountingType
-from pyfactoring.utils.pydioms.possibleidiom import CodeBlockIdiom, Idiom, IdiomState, PossibleIdiom
+from pyfactoring.utils.pydioms.idiom import CodeBlockIdiom, Idiom, IdiomState, PossibleIdiom
 from pyfactoring.utils.pydioms.prefixtree import (
     PrefixLeaf,
     PrefixNode,
