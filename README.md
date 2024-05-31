@@ -147,7 +147,7 @@ pyfactoring restore
 
 ## Configuration
 
-Pyfactoring can be configured using the `pyproject.toml` file. [Configuration example](https://github.com/Kiriruso/pyfactoring/blob/master/pyproject.toml.example).
+Pyfactoring can be configured using the `pyproject.toml` file. [Configuration example](https://github.com/Kiriruso/pyfactoring/blob/master/pyproject.example.toml).
 
 If left unspecified, Pyfactoring's default configuration is equivalent to the following pyproject.toml file:
 
