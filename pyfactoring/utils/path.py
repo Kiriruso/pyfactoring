@@ -5,8 +5,6 @@ import sys
 from collections.abc import Collection
 from pathlib import Path
 
-from pyfactoring.exceptions import FileOrDirNotFoundError
-
 
 def _get_venv_name() -> str:
     python_dir = os.path.dirname(sys.executable)
@@ -46,7 +44,7 @@ def collect_filepaths(path: str, *, exclude: Collection[str] = None) -> list[Pat
     if os.path.isfile(path) and path.endswith(".txt"):
         return _collect_from_file(path, exclude)
 
-    raise FileOrDirNotFoundError(f"Path does not lead to any dirs or file[.txt | .py]: '{path}'")
+    raise FileNotFoundError(f"Path does not lead to any dirs or file[.txt | .py]: '{path}'")
 
 
 def separate_filepaths(
@@ -89,13 +87,19 @@ def _collect_from_dir(dirpath: str, exclude: Collection[str]) -> list[Path]:
 
 
 def _collect_from_file(filepath: str, exclude: Collection[str]) -> list[Path]:
+    filepaths = []
     relative_path = Path(filepath).parent
     with open(filepath, "r") as f:
-        filepaths = [
-            relative_path / file.rstrip()
-            for file in f.readlines()
-            if not file.startswith("#") and file != "\n" and file.rstrip().endswith(".py")
-        ]
+        for line in f.readlines():
+            if line.startswith("#"):
+                continue
+
+            path = line.rstrip()
+            if os.path.isdir(path):
+                filepaths.extend(_collect_from_dir(path, exclude))
+            elif path.endswith(".py"):
+                filepaths.append(relative_path / path)
+
     return _filter_filepaths(filepaths, exclude)
 
 

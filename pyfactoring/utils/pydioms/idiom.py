@@ -84,7 +84,7 @@ class Idiom:
 
 @dataclass
 class CodeBlockIdiom:
-    ast_node: ast.AST = field(repr=False)
+    ast_node: ast.AST = field(kw_only=True, repr=False)
 
     file: str
     lineno: int

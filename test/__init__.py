@@ -1,1 +1,4 @@
-from test import conftest
+import os
+
+
+os.environ["PYTEST"] = "run"

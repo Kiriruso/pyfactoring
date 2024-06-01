@@ -1,4 +1,5 @@
 import argparse
+import os
 
 
 class _SubcommandHelpFormatter(argparse.RawDescriptionHelpFormatter):
@@ -101,7 +102,7 @@ pydioms_group.add_argument(
     "--pd-length",
     type=int,
     metavar="<length>",
-    help="minimum length of each tree to be processed [default: 10]",
+    help="minimum length of each tree to be processed [default: 20]",
 )
 
 pyclones_group = parser.add_argument_group("pyclones options")
@@ -126,7 +127,11 @@ pyclones_group.add_argument(
     "--pc-length",
     type=int,
     metavar="<length>",
-    help="minimum code fragment length [default: 5]",
+    help="minimum code fragment length [default: 4]",
 )
 
-args = parser.parse_args()
+
+if os.environ.get("PYTEST") == "run":
+    args = None
+else:
+    args = parser.parse_args()

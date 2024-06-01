@@ -71,9 +71,9 @@ class IdiomFinder:
                 filtered_idioms[idiom_state] = idioms[idiom_state]
 
         if pydioms_settings.verbose:
-            print(f"rejected: {len(rejected_idioms):>3}")
-            print(f"unfiltered: {len(idioms)}")
-            print(f"filtered: {len(filtered_idioms):>3}")
+            print(f"Rejected: {len(rejected_idioms)}")
+            print(f"Unfiltered: {len(idioms)}")
+            print(f"Filtered: {len(filtered_idioms)}")
             print()
 
         sorted_idioms = sorted(filtered_idioms.items(), key=lambda p: -1 * p[1].efficiency)
@@ -96,12 +96,12 @@ class IdiomFinder:
                 inspected_tree = tree.inspected_trees[i]
                 idioms[idiom].append(
                     CodeBlockIdiom(
-                        inspected_tree.ast_node,
                         inspected_tree.file,
                         inspected_tree.ast_node.lineno,
                         inspected_tree.ast_node.end_lineno,
                         inspected_tree.ast_node.col_offset,
                         inspected_tree.ast_node.end_col_offset,
+                        ast_node=inspected_tree.ast_node,
                     ),
                 )
 

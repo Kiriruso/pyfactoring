@@ -1,0 +1,4 @@
+file_containing_clone.py
+class.py
+test\samples\chained
+example.txt

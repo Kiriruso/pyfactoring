@@ -7,11 +7,6 @@ class PyfactoringException(Exception):
 
 
 @dataclass(frozen=True)
-class FileOrDirNotFoundError(PyfactoringException):
-    """Invalid path to project file or directory"""
-
-
-@dataclass(frozen=True)
 class UndefinedModeError(PyfactoringException):
     """Invalid template extraction mode
 

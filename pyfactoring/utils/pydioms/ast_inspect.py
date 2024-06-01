@@ -1,8 +1,8 @@
 import ast
+import warnings
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from pathlib import Path
-from warnings import warn
 
 from pyfactoring.utils.pydioms.ast_types import (
     AST_NODES_INFO,
@@ -15,9 +15,6 @@ from pyfactoring.utils.pydioms.ast_types import (
 
 @dataclass
 class ASTInspectedLeaf:
-    # todo: написать назначение класса
-    """"""
-
     name: str = field(default="None")
     count_as: CountingType = field(default=CountingType.NOT_COUNTED)
 
@@ -37,7 +34,6 @@ class ASTInspectedLeaf:
 
 @dataclass
 class ASTInspectedNode(ASTInspectedLeaf):
-    # todo: написать назначение класса
     """"""
 
     realize_subtree: bool = field(default=False, init=False, repr=False)
@@ -105,10 +101,9 @@ def source_from_inspected_tree(
 
 
 def make_inspected_tree(root, filepath) -> ASTInspectedNode | ASTInspectedLeaf:
-    # todo: написать назначение
     """
-
     :param root:
+    :param filepath
     :return:
     """
 
@@ -126,7 +121,7 @@ def make_inspected_tree(root, filepath) -> ASTInspectedNode | ASTInspectedLeaf:
     ast_info = AST_NODES_INFO.get(ast_name)
 
     if ast_info is None:
-        warn(f"Syntax is not supported: '{ast_name}'")
+        warnings.warn(f"Syntax is not supported: '{ast_name}'")
         return ASTInspectedNode()
 
     inspected_node = ASTInspectedNode(ast_info.name, ast_info.count_as)
