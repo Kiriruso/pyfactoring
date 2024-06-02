@@ -52,7 +52,7 @@ class CloneFinder:
             self.allowed_nodes: tuple[str] = tuple(self.allowed_nodes)
 
     def find_all(
-            self, path: Path, *, unfiltered: bool = False,
+        self, path: Path, *, unfiltered: bool = False,
     ) -> dict[str, list[CodeBlockClone]]:
         clones: dict[str, list[CodeBlockClone]] = defaultdict(list)
         module = extract.module(path)
@@ -98,11 +98,11 @@ class CloneFinder:
         }
 
     def chained_find_all(
-            self, path: Collection[Path],
+        self, paths: Collection[Path],
     ) -> dict[str, list[CodeBlockClone]]:
         clones: dict[str, list[CodeBlockClone]] = {}
-        for filepath in path:
-            current_clones = self.find_all(filepath, unfiltered=True)
+        for path in paths:
+            current_clones = self.find_all(path, unfiltered=True)
             for template, blocks in current_clones.items():
                 if template not in clones.keys():
                     clones[template] = blocks
