@@ -6,14 +6,19 @@ from pyfactoring import Scope, Templater
 
 
 @pytest.mark.parametrize(
-    ("input_vars", "input_consts", "expected_vars", "expected_consts"),
+    (
+        "input_vars", "input_locals", "input_consts",
+        "expected_vars", "expected_locals", "expected_consts",
+    ),
     (
         (
-            tuple(), tuple(), tuple(), tuple(),
+            tuple(), tuple(), tuple(), tuple(), tuple(), tuple()
         ),
         (
             tuple(),
+            tuple(),
             (-1, "-1", 1.0, 1, True, "True", False, 0, "0"),
+            tuple(),
             tuple(),
             (
                 "__const_0__", "__const_1__", "__const_2__",
@@ -23,28 +28,44 @@ from pyfactoring import Scope, Templater
         ),
         (
             ("x", "y", "z"),
+            ("i", "j", "k"),
             (1, 2, "3", "True", "1", "2"),
             ("__var_0__", "__var_1__", "__var_2__"),
+            ("__local_0__", "__local_1__", "__local_2__"),
             ("__const_0__", "__const_1__", "__const_2__", "__const_3__", "__const_4__", "__const_5__"),
         ),
         (
             ("x", "y", "z"),
-            (1, 2, "3", "True", "1", "2"),
+            ("x", "y", "z", "i", "j", "k"),
+            tuple(),
             ("__var_0__", "__var_1__", "__var_2__"),
-            ("__const_0__", "__const_1__", "__const_2__", "__const_3__", "__const_4__", "__const_5__"),
+            ("__var_0__", "__var_1__", "__var_2__", "__local_0__", "__local_1__", "__local_2__"),
+            tuple(),
         ),
-    )
+    ),
 )
 def test_get_vars_and_consts_from_scope_success(
     input_vars: tuple[str],
+    input_locals: tuple[str],
     input_consts: tuple[Any],
     expected_vars: tuple[str],
+    expected_locals: tuple[str],
     expected_consts: tuple[str],
 ):
+    # global scope
     scope = Scope()
 
-    for i, v in enumerate(input_vars):
-        assert scope.get_name(v) == expected_vars[i], (v, scope.get_name(v))
+    for i, l in enumerate(input_vars):
+        assert scope.get_name(l) == expected_vars[i], (l, scope.get_name(l))
+
+    for i, c in enumerate(input_consts):
+        assert scope.get_const(c) == expected_consts[i], (c, scope.get_const(c))
+
+    # local scope
+    scope = Scope(scope)
+
+    for i, l in enumerate(input_locals):
+        assert scope.get_name(l) == expected_locals[i], (l, scope.get_name(l))
 
     for i, c in enumerate(input_consts):
         assert scope.get_const(c) == expected_consts[i], (c, scope.get_const(c))

@@ -76,8 +76,8 @@ class Scope:
             self._variables[id_] = f"__var_{len(self._variables)}__"
         return self._variables[id_]
 
-    def get_const(self, value_) -> str:
-        if value_ == Ellipsis:
+    def get_const(self, value_: str) -> str:
+        if value_ == "Ellipsis":
             return Ellipsis
 
         if isinstance(value_, str):

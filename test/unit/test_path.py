@@ -60,7 +60,7 @@ from pyfactoring.utils.path import collect_filepaths, separate_filepaths
                 r"test\samples\file_containing_clone.py",
             },
             5,
-        )
+        ),
     ),
 )
 def test_collect_filepaths_success(path: str, expected: set[str], count: int):
@@ -77,7 +77,7 @@ def test_collect_filepaths_success(path: str, expected: set[str], count: int):
         r"undefined",
         r"test\undefined",
         r"data.py",
-    )
+    ),
 )
 def test_collect_filepaths_fail(path: str):
     with pytest.raises(FileNotFoundError):
@@ -120,7 +120,7 @@ def test_collect_filepaths_fail(path: str):
     )
 )
 def test_collect_filepaths_with_exclude_success(
-        path: str, exclude: tuple[str], expected: set[str], count: int
+    path: str, exclude: tuple[str], expected: set[str], count: int
 ):
     collected = collect_filepaths(path, exclude=exclude)
     collected = {str(path) for path in collected}
@@ -233,15 +233,15 @@ def test_collect_filepaths_with_exclude_success(
             1,
             2,
         ),
-    )
+    ),
 )
 def test_separate_filepaths_success(
-        paths: list[str],
-        chain: list[str],
-        expected_single: set[str],
-        expected_chained: set[str],
-        s_count: int,
-        c_count: int,
+    paths: list[str],
+    chain: list[str],
+    expected_single: set[str],
+    expected_chained: set[str],
+    s_count: int,
+    c_count: int,
 ):
     single, chained = separate_filepaths(paths, chain)
     single = {str(path) for path in single}

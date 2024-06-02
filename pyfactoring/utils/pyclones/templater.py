@@ -391,11 +391,9 @@ class Templater(ast.NodeTransformer):
             case ast.arg:
                 node.arg = self._scope.get_name(node.arg)
             case ast.Constant:
-                if str(node.value) not in self._unique_consts:
-                    if isinstance(node.value, str):
-                        self._unique_consts.append(f"\"{node.value}\"")
-                    else:
-                        self._unique_consts.append(str(node.value))
+                node.value = f"\"{node.value}\"" if isinstance(node.value, str) else str(node.value)
+                if node.value not in self._unique_consts:
+                    self._unique_consts.append(node.value)
                 node.value = self._scope.get_const(node.value)
             case ast.Tuple | ast.List | ast.Set:
                 node.elts = self.visit_collection(node.elts)

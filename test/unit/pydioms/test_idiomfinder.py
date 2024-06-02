@@ -19,7 +19,7 @@ from pyfactoring.utils.pydioms.prefixtree import PrefixTree
             r"test\unit\pydioms\idiom_2.py",
             5,
         ),
-    )
+    ),
 )
 def test_find_idioms_success(path: str, count: int):
     tree = PrefixTree()

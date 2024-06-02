@@ -72,7 +72,7 @@ def test_find_clones_in_single_files_success(path: Path, count: int, total: int,
             {
                 Path("test/samples/chained/chained_1.py"): {8, 19, 27, 31},
                 Path("test/samples/chained/chained_2.py"): {7, 11, 22, 30, 34, 45, 53, 57},
-            }
+            },
         ),
         (
             (
@@ -84,7 +84,7 @@ def test_find_clones_in_single_files_success(path: Path, count: int, total: int,
             {
                 Path("test/samples/chained/chained_1.py"): {8, 19, 31},
                 Path("test/samples/chained/chained_3.py"): {7, 15},
-            }
+            },
         ),
         (
             (
@@ -98,7 +98,7 @@ def test_find_clones_in_single_files_success(path: Path, count: int, total: int,
                 Path("test/samples/chained/chained_1.py"): {8, 19, 27, 31},
                 Path("test/samples/chained/chained_2.py"): {7, 11, 22, 30, 34, 45, 53, 57},
                 Path("test/samples/chained/chained_3.py"): {7, 15},
-            }
+            },
         ),
         (
             (
@@ -112,7 +112,7 @@ def test_find_clones_in_single_files_success(path: Path, count: int, total: int,
                 Path("test/samples/function/function_1.py"): {1},
                 Path("test/samples/function/function_2.py"): {8, 18},
                 Path("test/samples/function/function_3.py"): {6},
-            }
+            },
         ),
         (
             (
@@ -128,9 +128,9 @@ def test_find_clones_in_single_files_success(path: Path, count: int, total: int,
                 Path("test/samples/function/function_2.py"): {8, 18},
                 Path("test/samples/function/function_3.py"): {6},
                 Path("test/samples/chained/chained_3.py"): {7, 15},
-            }
+            },
         ),
-    )
+    ),
 )
 def test_find_clones_in_chained_files_success(
     paths: tuple[Path], count: int, total: int, positions: dict[Path, set[int]],

@@ -65,7 +65,7 @@ def test_function_templating_success(ast_input: ast.AST, ast_expected: ast.AST):
     )
 )
 def test_function_vars_consts_success(
-        ast_input: tuple[ast.AST, ast.AST], exp_vars: set[str], exp_consts: set[str]
+    ast_input: tuple[ast.AST, ast.AST], exp_vars: set[str], exp_consts: set[str],
 ):
     copy_input = copy.deepcopy(ast_input[0])
     templater = Templater()

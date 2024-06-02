@@ -7,14 +7,14 @@ from test.unit.pyclones.conftest import load_tests
 from pyfactoring.utils.pyclones.templater import Templater
 
 
-tests = load_tests("if")
+tests = load_tests("class")
 
 
 @pytest.mark.parametrize(
     ("ast_input", "ast_expected"),
     (*tests,),
 )
-def test_if_templating_success(ast_input: ast.AST, ast_expected: ast.AST):
+def test_class_templating_success(ast_input: ast.AST, ast_expected: ast.AST):
     copy_input = copy.deepcopy(ast_input)
     templater = Templater()
 
@@ -29,47 +29,17 @@ def test_if_templating_success(ast_input: ast.AST, ast_expected: ast.AST):
     (
         (
             tests[0],
-            {"a"},
-            {"10", "50"},
+            {"clsv_1", "clsv_2", "self", "v1", "v2"},
+            {"10", '"10"'},
         ),
         (
             tests[1],
-            {"i", "j"},
-            set(),
+            {"self", "v1", "v2"},
+            {"0"},
         ),
-        (
-            tests[2],
-            {"a", "b"},
-            {"10"},
-        ),
-        (
-            tests[3],
-            {"x", "y"},
-            {"True", "10"},
-        ),
-        (
-            tests[4],
-            {"x", "y"},
-            {"10"},
-        ),
-        (
-            tests[5],
-            {"x", "y"},
-            {"10"},
-        ),
-        (
-            tests[6],
-            {"a", "b", "x"},
-            {"10"},
-        ),
-        (
-            tests[7],
-            {"x", "y"},
-            {"50", "20", "10", "1000", "2000", "0", "500", "200", "10000"},
-        ),
-    ),
+    )
 )
-def test_if_vars_consts_success(
+def test_class_vars_consts_success(
     ast_input: tuple[ast.AST, ast.AST], exp_vars: set[str], exp_consts: set[str],
 ):
     copy_input = copy.deepcopy(ast_input[0])
