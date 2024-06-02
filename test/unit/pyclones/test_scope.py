@@ -100,3 +100,8 @@ def test_create_nested_scopes_success():
                 assert "z" not in templater._scope.variables
 
             assert templater._scope not in templater._scope_stack
+            assert "z" not in templater._scope.variables
+            assert "z" not in templater._scope.locals
+
+    assert "y" not in templater._scope.variables
+    assert "y" not in templater._scope.locals

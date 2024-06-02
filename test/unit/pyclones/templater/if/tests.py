@@ -58,8 +58,8 @@ if __var_0__ > __var_1__:
     __local_1__ = __var_1__
 else:
     __local_0__ = '__const_0__'
-    __local_2__ = '__const_1__'
-    __local_1__ = __var_0__
+    __local_1__ = '__const_1__'
+    __local_2__ = __var_0__
     print(__var_1__)
 
 # ================================ #
@@ -147,13 +147,13 @@ if __var_0__ > __var_1__ + '__const_0__':
             __local_1__ = '__const_4__'
             print(__local_1__ - '__const_0__')
 
-    if __local_2__ := __local_0__ + __var_1__:
-        __local_3__ = '__const_5__'
-        if __local_2__ < '__const_6__':
+    if __local_1__ := __local_0__ + __var_1__:
+        __local_2__ = '__const_5__'
+        if __local_1__ < '__const_6__':
             __var_0__ = '__const_2__'
-        elif __local_2__ > '__const_3__':
+        elif __local_1__ > '__const_3__':
             __var_1__ = '__const_7__'
         else:
-            __local_3__ = '__const_8__'
+            __local_2__ = '__const_8__'
 
-        print(__local_2__ >= __local_0__)
+        print(__local_1__ >= __local_0__)

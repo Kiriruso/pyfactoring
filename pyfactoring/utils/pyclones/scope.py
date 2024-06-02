@@ -1,3 +1,6 @@
+import copy
+
+
 class Scope:
     def __init__(self, outer: "Scope" = None, *, global_: bool = False):
         self.is_local: bool = False
@@ -12,8 +15,8 @@ class Scope:
 
         if outer:
             self.is_local = True and not outer.is_global
-            self._locals = outer._locals if not outer.is_global else {}
-            self._variables = {name: template for name, template in outer._variables.items()}
+            self._locals = copy.copy(outer._locals) if not outer.is_global else {}
+            self._variables = copy.copy(outer._variables)
             self._constants = outer._constants if not outer.is_global else {}
             self._imports = outer._imports
             self._global_variables = outer._global_variables

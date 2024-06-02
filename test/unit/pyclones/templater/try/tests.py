@@ -13,12 +13,12 @@ finally:
 
 try:
     __local_0__ = '__const_0__' / '__const_1__'
-except ZeroDivisionError as __local_1__:
-    __local_2__ = '__const_2__'
-    print(__local_1__)
-except Exception as __local_1__:
-    __local_2__ = '__const_3__'
-    print(__local_1__)
+except ZeroDivisionError as __local_0__:
+    __local_1__ = '__const_2__'
+    print(__local_0__)
+except Exception as __local_0__:
+    __local_1__ = '__const_3__'
+    print(__local_0__)
 finally:
     print('__const_4__')
 

@@ -18,8 +18,8 @@ def test_function_templating_success(ast_input: ast.AST, ast_expected: ast.AST):
     copy_input = copy.deepcopy(ast_input)
     templater = Templater()
 
-    input_dump = ast.dump(templater.visit(copy_input))
-    expected_dump = ast.dump(ast_expected)
+    input_dump = ast.dump(templater.visit(copy_input), indent=4)
+    expected_dump = ast.dump(ast_expected, indent=4)
 
     assert input_dump == expected_dump
 

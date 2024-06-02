@@ -106,6 +106,6 @@ match type(__var_0__):
     case __var_3__:
         __var_0__.value = __local_0__.scoped_constant(__var_0__.value)
     case __var_4__ | __var_5__ | __var_6__:
-        __var_0__.elts = list(map(__local_1__, __var_0__.elts))
+        __var_0__.elts = list(map(__local_0__, __var_0__.elts))
     case _:
         print('__const_0__')
