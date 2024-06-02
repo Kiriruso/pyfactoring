@@ -3,7 +3,7 @@ a, b, k = 1, 2, 3
 # while a
 while a:
     print(a)
-    x = 10
+    x = "10"
 
     if x + 10 > 19:
         while True:

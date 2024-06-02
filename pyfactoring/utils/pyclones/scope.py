@@ -18,6 +18,9 @@ class Scope:
             self._imports = outer._imports
             self._global_variables = outer._global_variables
 
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.variables}, {self.locals}, {self.constants})"
+
     @property
     def variables(self) -> list[str]:
         return self._variables.keys()
@@ -74,7 +77,10 @@ class Scope:
         if value_ == Ellipsis:
             return Ellipsis
 
-        value_ = str(value_)
+        if isinstance(value_, str):
+            value_ = f"\"{value_}\""
+        else:
+            value_ = str(value_)
 
         if value_ in self._constants.values():
             return value_

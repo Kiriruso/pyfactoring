@@ -1,5 +1,6 @@
 import ast
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from pyfactoring.utils.pydioms.prefixtree import PrefixNode, SubtreeVariant
 
@@ -86,7 +87,7 @@ class Idiom:
 class CodeBlockIdiom:
     ast_node: ast.AST = field(kw_only=True, repr=False)
 
-    file: str
+    file: Path
     lineno: int
     end_lineno: int
     colno: int
