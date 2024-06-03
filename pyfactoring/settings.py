@@ -1,7 +1,7 @@
 import os
 import sys
 import tomllib
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,6 +20,15 @@ class CommonSettings(BaseSettings):
     exclude: Annotated[list[str], Field(default_factory=list)]
     chain: Annotated[list[str], Field(default_factory=list)]
     chain_all: Annotated[bool, Field(default=False)]
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.chain_all and self.chain:
+            raise OptionsConflictError(
+                "The passed options are incompatible: '--chain-all' and '--chain'",
+            )
+
+        if self.chain_all:
+            self.chain = self.paths
 
     model_config = SettingsConfigDict(extra="ignore")
 

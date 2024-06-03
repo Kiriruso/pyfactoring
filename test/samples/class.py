@@ -21,8 +21,8 @@ class TemplatedFunc:
         module = module.rstrip(".py")
         return f"from {module} import {self.name}"
 
-    def call_clone(self, params: list[str]) -> str:
+    def call_clone(cls, params: list[str]) -> str:
         print("temp")
-        awaitable = "await " if self.is_async else ""
+        awaitable = "await " if cls.is_async else ""
         params = ", ".join(params)
-        return f"{awaitable}{self.name}({params})"
+        return f"{awaitable}{cls.name}({params})"

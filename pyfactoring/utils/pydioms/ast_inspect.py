@@ -1,5 +1,4 @@
 import ast
-import warnings
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -121,7 +120,6 @@ def make_inspected_tree(root, filepath) -> ASTInspectedNode | ASTInspectedLeaf:
     ast_info = AST_NODES_INFO.get(ast_name)
 
     if ast_info is None:
-        warnings.warn(f"Syntax is not supported: '{ast_name}'")
         return ASTInspectedNode()
 
     inspected_node = ASTInspectedNode(ast_info.name, ast_info.count_as)

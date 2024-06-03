@@ -169,10 +169,12 @@ def action_format():
 
         if single_paths:
             format_files(single_paths)
-            cache.format_cache(single_paths)
+            if not common_settings.no_cache:
+                cache.format_cache(single_paths)
 
         if chained_paths:
             format_files(chained_paths, is_chained=True)
-            cache.format_cache(chained_paths, is_chained=True)
+            if not common_settings.no_cache:
+                cache.format_cache(chained_paths, is_chained=True)
     except FileNotFoundError as e:
         print(f"{Fore.RED}Invalid path to project file or directory:{Style.RESET_ALL} {e}")

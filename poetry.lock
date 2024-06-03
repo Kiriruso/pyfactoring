@@ -290,13 +290,13 @@ yaml = ["pyyaml (>=6.0.1)"]
 
 [[package]]
 name = "pytest"
-version = "8.2.0"
+version = "8.2.1"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.2.0-py3-none-any.whl", hash = "sha256:1733f0620f6cda4095bbf0d9ff8022486e91892245bb9e7d5542c018f612f233"},
-    {file = "pytest-8.2.0.tar.gz", hash = "sha256:d507d4482197eac0ba2bae2e9babf0672eb333017bcedaa5fb1a3d42c1174b3f"},
+    {file = "pytest-8.2.1-py3-none-any.whl", hash = "sha256:faccc5d332b8c3719f40283d0d44aa5cf101cec36f88cde9ed8f2bc0538612b1"},
+    {file = "pytest-8.2.1.tar.gz", hash = "sha256:5046e5b46d8e4cac199c373041f26be56fdb81eb4e67dc11d4e10811fc3408fd"},
 ]
 
 [package.dependencies]
@@ -472,4 +472,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "ee48a5af7ce4fe4e77fa2254ebff733d171201fa0d5f1f321522a145e92216d4"
+content-hash = "585406cc80c45b54c1d5d267ef5df811148384d41232262768c78ec6d9442272"

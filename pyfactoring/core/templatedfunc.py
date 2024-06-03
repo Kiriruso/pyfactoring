@@ -16,12 +16,11 @@ class TemplatedFunc:
 
     def call(self, block: CodeBlockClone) -> str:
         await_word = "await " if self.is_async else ""
-        self_word = ""
-        if block.class_name:
-            self_word = "self."
-            block.vars.remove("self")
+        prefix = ""
+        if block.class_name and block.vars:
+            prefix = f"{block.vars.pop(0)}."
         params = ", ".join(itertools.chain(block.vars, block.consts))
-        return f"{await_word}{self_word}{self.name}({params})"
+        return f"{await_word}{prefix}{self.name}({params})"
 
     def import_from(self, path: Path) -> str:
         module = ".".join(path.parts)
