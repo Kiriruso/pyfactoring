@@ -31,7 +31,7 @@ def _insert_function_call(sources: dict[Path, list[str]], block: CodeBlockClone,
     line = sources[block.file][block.lineno - shift]
     indent = " " * (len(line) - len(line.lstrip()))
     sources[block.file][block.lineno - shift] = f"{indent}{call}\n"
-    print(f"{block.file}:0: {Fore.GREEN}Formatted:{Style.RESET_ALL} clone replaced by call {call}")
+    print(f"{block.file}:0: {Fore.GREEN}Formatted:{Style.RESET_ALL} clone replaced")
 
 
 def _remove_remaining_clone_parts(
