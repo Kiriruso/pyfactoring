@@ -72,12 +72,18 @@ def _find_lineno_after_class_name(name: str, lines: list[str]) -> int:
 
 
 def _find_lineno_after_imports(lines: list[str]) -> int:
-    lineno_after_imports = 0
+    bracket = False
+    lineno = 0
     for lineno, line in enumerate(lines):
-        if "import" not in line:
-            lineno_after_imports = lineno
+        if "(" in line:
+            bracket = True
+
+        if "import" not in line and not bracket:
             break
-    return lineno_after_imports
+
+        if ")" in line and bracket:
+            bracket = False
+    return lineno
 
 
 def _insert_func_def_or_import(

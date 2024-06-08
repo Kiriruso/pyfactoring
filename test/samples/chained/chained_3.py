@@ -1,5 +1,10 @@
 import ast
 import builtins
+from collections import (deque)
+from collections import (
+    Collection,
+    Counter,
+)
 
 z, b = 10, 20
 
