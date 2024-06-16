@@ -82,7 +82,7 @@ def _assign_arguments(config: dict):  # noqa: PLR0912
 
         if args.action == "format":
             if args.pack_consts:
-                config["common"]["pack_consts"] = args.pack_const
+                config["common"]["pack_consts"] = args.pack_consts
 
         if args.no_cache:
             config["common"]["no_cache"] = args.no_cache
